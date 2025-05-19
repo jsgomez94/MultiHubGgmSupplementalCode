@@ -87,7 +87,7 @@ run_info <- list(
     abrev_name     = "ipchd"),
 
   list(
-    main_dir       = "400_stiefelsphere/",
+    main_dir       = "400_jichd/",
     run_index      = 1,
     runtype        = runtype,
     abrev_name     = "stisph")

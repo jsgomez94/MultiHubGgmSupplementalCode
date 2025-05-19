@@ -29,7 +29,7 @@ source("045_Method_MatrixThresholding.R")
 source("061_Simulation_CreatingParameters.R")
 
 index  <- 1
-main_folder <- "400_stiefelsphere/"
+main_folder <- "400_jichd/"
 source(paste0(main_folder, index, "22_SimulationFunction.R"))
 
 #################################################
