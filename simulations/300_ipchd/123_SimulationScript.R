@@ -18,9 +18,9 @@ source("001_requirements.R"); search()
 source("002_GeneratingMultipleMatrixSparse.R")
 source("003_UsefulMatrixTransforms.R")
 
-source("035_Method_MatrixThresholding.R")
-source("036_Method_VariableScreening.R")
-source("037_Method_IPCHD.R")
+source("031_Method_MatrixThresholding.R")
+source("032_Method_VariableScreening.R")
+source("033_Method_IPCHD.R")
 
 source("051_Estimation_HubSelection.R")
 source("061_Simulation_CreatingParameters.R")

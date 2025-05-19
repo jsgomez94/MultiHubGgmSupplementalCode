@@ -18,14 +18,9 @@ source("001_requirements.R"); search()
 source("002_GeneratingMultipleMatrixSparse.R")
 source("003_UsefulMatrixTransforms.R")
 
-source("041_VariableScreening.R")
-source("042_SGDsphere.R")
-source("043_SGDspheremulti.R")
-source("044_SGDstiefel.R")
-source("045_Method_MatrixThresholding.R")
+source("041_Method_JICHD.R")
+source("042_Method_MatrixThresholding.R")
 
-
-#source("051_Estimation_HubSelection.R")
 source("061_Simulation_CreatingParameters.R")
 
 index  <- 1
