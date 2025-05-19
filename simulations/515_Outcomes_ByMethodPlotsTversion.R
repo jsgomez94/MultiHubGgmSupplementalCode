@@ -1,6 +1,8 @@
 ############################################
 ############################################
 ## SETTING PARAMETERS:
+wd <- getwd()
+.libPaths(paste0(wd,"/req_lib"))
 
 source("001_requirements.R")
 library(readr)

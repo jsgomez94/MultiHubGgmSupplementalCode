@@ -1,7 +1,9 @@
 ############################################
 ############################################
 ## SETTING PARAMETERS:
-.libPaths("/nas/longleaf/home/jsgomez/github/Project-2/ExperimentsCluster4/req_lib")
+wd <- getwd()
+.libPaths(paste0(wd,"/req_lib"))
+
 library(readr)
 library(ggplot2)
 library(tidyr)
