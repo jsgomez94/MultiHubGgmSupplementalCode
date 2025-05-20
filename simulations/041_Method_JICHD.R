@@ -31,7 +31,7 @@ examples = FALSE
 
 ######################
 ######################
-## Step 1: Objective function
+## Step 1.1 : Objective function
 .objective.stiefel <- function(V0, sigmalist, K, find.eigen = FALSE) {
   .dir <- dim(V0)[2]
   .f <- rep(0, K)
@@ -69,6 +69,20 @@ examples = FALSE
   }
   
   return(.OUTPUT)
+}
+
+
+######################
+######################
+## Step 1.2 = code the objective function:
+## f(v0) = max_k v0^T Sigma(k) v0
+## for v0 on the unit sphere.
+.objective.sphere <- function(v0, sigmalist, K) {
+  .vals <- rep(0,K)
+  for (.k in 1:K) {
+    .vals[.k] <- crossprod( sigmalist[[.k]] %*% v0, v0 )
+  }
+  return(max(.vals))
 }
 
 
