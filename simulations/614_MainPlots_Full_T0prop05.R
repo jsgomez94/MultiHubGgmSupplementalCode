@@ -16,8 +16,7 @@ library(pROC)
 plot_version <- "1"
 
 ###################### Parameter table:
-runtype       <- 2 # FOR EXPERIMENT RUNS
-#runtype       <- 3 # FOR FULL RUNS
+runtype       <- 3 # FOR FULL SIMULATIONS
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,
@@ -47,7 +46,7 @@ attach(sim_par_table)
 
 
 ###################### Creating folders:
-subfolder_new        <- paste0("500_AggregatedDataExperiments/")
+subfolder_new        <- paste0("600_AggregatedDataFull/")
 subfolder_data_new   <- paste0(subfolder_new, "data_all/")
 subfolder_plots_new  <- paste0(subfolder_new, "plots_all/")
 
@@ -81,13 +80,17 @@ if (!dir.exists(subfolder_plots_new)) {
 method_names <- c(
     "GL.CORR.d",          ## GLASSO-methods
     "HWGL.CORR.d",        ## HWGL-methdos.
+    "COR_Scr_IPCHD", 
+    "COR_Thr_IPCHD",
     "ST.OVER.CORR.IM",
     "ST.OVER.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
     "HWGL",        ## HWGL-methdos.
-    "SampStiefelOver",
-    "ThrStiefelOver")
+    "IPC-HD: Screening",
+    "IPC-HD: Threshold",
+    "JIC-HD: Sample Cov",
+    "JIC-HD: Thresholded Cov")
 
 
 outputs_merged_list <- list()
@@ -97,7 +100,7 @@ for (p_val in c(100,200,500)) {
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
-  sim_ind_load    <- which(T0_prop == 1 & p == p_val)
+  sim_ind_load    <- which(T0_prop == 0.5 & p == p_val)
   type            <- "all"
   results_dir     <- paste0(subfolder_new, "plots_", type, "/")
 
@@ -113,7 +116,7 @@ for (p_val in c(100,200,500)) {
 
   ## Merge dataset of JIC-HD-derived data.
   output_merged_jic  <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-    filter(METHOD %in% method_names[-c(1,2)]) %>%
+    filter(METHOD %in% method_names[-c(1:4)]) %>%
     mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
     arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
     select(-K_MAT_NUM, -TIME)
@@ -166,7 +169,7 @@ for (p_val in c(100,200,500)) {
   # TPR of GLASSO-methods.
 
   output_merged_gl   <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-    filter(METHOD %in% method_names[c(1,2)]) %>%
+    filter(METHOD %in% method_names[c(1:4)]) %>%
     filter(K_MAT_NUM != 0) %>%
     mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
     arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
@@ -282,7 +285,7 @@ output_summarised <- output_merged %>%
 
 file_name <- paste0(
   results_dir, "v", plot_version,
-    "_518_TPR_trimmed_deg_T0prop1.pdf")
+    "_614_TPR_trimmed_deg_T0prop05.pdf")
 
 pdf(file_name, width = 8, height = 5)
 ## Plot 1: TPR 

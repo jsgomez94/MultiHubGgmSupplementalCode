@@ -39,7 +39,6 @@ sim_par_table <- expand.grid(
     
   nsim            = ifelse(runtype <= 2, 2, 5),
   diagonal_shift  = c(2,5),
-  #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
   p               = c(100, 200, 500))
@@ -82,11 +81,11 @@ run_info <- list(
     runtype        = runtype,
     abrev_name     = "hwgl"),
     
-  #list(
-  #  main_dir       = "300_mglasso/",
-  #  run_index      = 1,
-  #  runtype        = runtype,
-  #  abrev_name     = "mgl")
+  list(
+    main_dir       = "300_ipchd/",
+    run_index      = 1,
+    runtype        = runtype,
+    abrev_name     = "ipchd"),
 
   list(
     main_dir       = "400_jichd/",
