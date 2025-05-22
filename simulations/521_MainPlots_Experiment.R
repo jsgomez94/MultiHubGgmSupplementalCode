@@ -207,13 +207,13 @@ for (p_val in c(100,200,500)) {
     output_merged_gl, MARGIN = 1, 
     function(x) {
       nhubs     <- 5
-      p_val     <- length(x) - 10
+      p_val     <- length(x) - 9
       id_task   <- x[1]
       args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
       trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
       nhubs     <- length(args_temp$Hjoint)
 
-      hubshat   <- as.numeric(x[-(1:10)])
+      hubshat   <- as.numeric(x[-(1:9)])
 
       tp <- sum(hubshat & trueHubs) / (nhubs)
       fp <- sum(hubshat & !trueHubs) / (p_val - nhubs)
