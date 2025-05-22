@@ -13,7 +13,10 @@ library(stringr)
 library(lazyeval)
 library(pROC)
 
-plot_version <- "1"
+input <- commandArgs(trailingOnly = TRUE)
+diag_shift_val <- as.numeric(input[1])
+T0_prop_val    <- as.numeric(input[2])
+
 
 ###################### Parameter table:
 runtype       <- 3 # FOR FULL SIMULATIONS
@@ -65,18 +68,6 @@ if (!dir.exists(subfolder_plots_new)) {
 ###################### Processing Data
 ##################################################################
 ##################################################################
-## Choosing data to load
-#method_names <- c(
-#    "GL.CORR.d",          ## GLASSO-methods
-#    "HWGL.CORR.d",        ## HWGL-methdos.
-#    "ST.OVER.CORR.IM", "ST.ORAC.CORR.IM", 
-#    "ST.OVER.THR.IM", "ST.ORAC.THR.IM")  ## IPC-HD
-#method_names_clean <- c(
-#    "GLASSO",          ## GLASSO-methods
-#    "HWGL",        ## HWGL-methdos.
-#    "SampStiefelOver", "SampStiefelOrac.",
-#    "ThrStiefelOver", "ThrStiefelOrac.")  ## IPC-HD
-
 method_names <- c(
     "GL.CORR.d",          ## GLASSO-methods
     "HWGL.CORR.d",        ## HWGL-methdos.
@@ -100,7 +91,7 @@ for (p_val in c(100,200,500)) {
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
-  sim_ind_load    <- which(T0_prop == 0.5 & p == p_val)
+  sim_ind_load    <- which(T0_prop == T0_prop_val & p == p_val & diagonal_shift == diag_shift_val)
   type            <- "all"
   results_dir     <- paste0(subfolder_new, "plots_", type, "/")
 
@@ -120,11 +111,9 @@ for (p_val in c(100,200,500)) {
     mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
     arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
     select(-K_MAT_NUM, -TIME)
-  output_merged_jic$diagonal_shift <- sim_par_table$diagonal_shift[output_merged_jic$TASK_ID]
   output_merged_jic$microrun <- rep(1:10, nrow(output_merged_jic) / 10) 
   output_merged_jic <- output_merged_jic %>% 
-    relocate(microrun, .after = 1) %>%
-    relocate(diagonal_shift, .after = 2)
+    relocate(microrun, .after = 1)
   dim(output_merged_jic)
   head(output_merged_jic[,1:15], 15)
   colnames(output_merged_jic)
@@ -134,13 +123,13 @@ for (p_val in c(100,200,500)) {
     output_merged_jic, MARGIN = 1, 
     function(x) {
       nhubs     <- 5
-      p_val     <- length(x) - 10
+      p_val     <- length(x) - 9
       id_task   <- x[1]
       args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
       trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
       nhubs     <- length(args_temp$Hjoint)
 
-      vals      <- as.numeric(x[-(1:10)])
+      vals      <- as.numeric(x[-(1:9)])
       vals_pos  <- vals
 
       tr_mean   <- mean(vals_pos)
@@ -174,11 +163,9 @@ for (p_val in c(100,200,500)) {
     mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
     arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
     select(-TIME)
-  output_merged_gl$diagonal_shift <- sim_par_table$diagonal_shift[output_merged_gl$TASK_ID]
   output_merged_gl$microrun <- rep(1:10, nrow(output_merged_gl) / 10) ## adding micro-run identifier...
   output_merged_gl <- output_merged_gl %>% 
-    relocate(microrun, .after = 1) %>%
-    relocate(diagonal_shift, .after = 2)
+    relocate(microrun, .after = 1)
   dim(output_merged_gl)
   head(output_merged_gl[, 1:15], 10)
 
@@ -187,13 +174,13 @@ for (p_val in c(100,200,500)) {
     output_merged_gl, MARGIN = 1, 
     function(x) {
       nhubs     <- 5
-      p_val     <- length(x) - 11
+      p_val     <- length(x) - 10
       id_task   <- x[1]
       args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
       trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
       nhubs     <- length(args_temp$Hjoint)
       
-      vals      <- as.numeric(x[-c(1:11)])
+      vals      <- as.numeric(x[-c(1:10)])
       vals_pos  <- vals        
       
       tr_mean   <- mean(vals_pos)
@@ -209,7 +196,7 @@ for (p_val in c(100,200,500)) {
   colnames(hubsdata_gl) <- paste0("ishub", 1:p_val)
   output_merged_gl <- cbind(output_merged_gl, hubsdata_gl) %>%
     dplyr::select(!starts_with("var")) %>%
-    group_by(TASK_ID, microrun, diagonal_shift, SIM_NUM, p, T0, n, ph1, ph2, METHOD) %>%
+    group_by(TASK_ID, microrun, SIM_NUM, p, T0, n, ph1, ph2, METHOD) %>%
     summarise_at(vars(starts_with("ishub")),
       function(x) {1 * (sum(x) == 3)}) %>%
     ungroup()
@@ -279,17 +266,46 @@ output_summarised <- output_merged %>%
     names_to      = "eval_par",
     values_to     = "eval") %>%
       
-  group_by(METHOD, p, ph1 , ph2, T0, n, diagonal_shift, eval_par) %>%
+  group_by(METHOD, p, ph1 , ph2, T0, n, eval_par) %>%
   summarise(mean = mean(eval), sd = sd(eval))
     
 
+## Plot 1: ph = 0.4
 file_name <- paste0(
-  results_dir, "v", plot_version,
-    "_614_TPR_trimmed_deg_T0prop05.pdf")
-
+  subfolder_plots_new, 
+  "621_MainTPR",
+  "_d", diag_shift_val, 
+  "_T0prop", T0_prop_val,
+  ".pdf")
 pdf(file_name, width = 8, height = 5)
 ## Plot 1: TPR 
-p1 <-  output_summarised %>% filter(eval_par == "tp", diagonal_shift == 2) %>%
+p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
+  mutate(
+    ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
+    ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
+    p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+    METHOD   = factor(METHOD)) %>%
+  ggplot(aes(x = n, y = mean)) + 
+  geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
+  #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
+  geom_hline(yintercept = c(0,1), linetype = 2) +
+  #facet_grid(rows = vars(ph2), cols = vars())
+  facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+  theme(legend.position="bottom")
+print(p1)
+dev.off()
+
+
+## Plot 1: ph = 0.4
+file_name <- paste0(
+  subfolder_plots_new, 
+  "621_MainFPR",
+  "_d", diag_shift_val, 
+  "_T0prop", T0_prop_val,
+  ".pdf")
+pdf(file_name, width = 8, height = 5)
+## Plot 1: TPR 
+p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
   mutate(
     ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
     ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
