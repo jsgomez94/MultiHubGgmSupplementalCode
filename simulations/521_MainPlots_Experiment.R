@@ -284,8 +284,9 @@ p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
     ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
     p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
-    METHOD   = factor(METHOD)) %>%
-  ggplot(aes(x = n, y = mean)) + 
+    METHOD   = factor(METHOD),
+    TPR = mean) %>%
+  ggplot(aes(x = n, y = TPR)) + 
   geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
   #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
   geom_hline(yintercept = c(0,1), linetype = 2) +
@@ -310,8 +311,9 @@ p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
     ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
     p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
-    METHOD   = factor(METHOD)) %>%
-  ggplot(aes(x = n, y = mean)) + 
+    METHOD   = factor(METHOD),
+    FPR = mean) %>%
+  ggplot(aes(x = n, y = FPR)) + 
   geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
   #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
   geom_hline(yintercept = c(0,1), linetype = 2) +
