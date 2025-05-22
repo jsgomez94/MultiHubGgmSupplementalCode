@@ -44,9 +44,7 @@ simulations/400_jichd/outputs1/data
 simulations/400_jichd/outputs1/bic_data
 
 simulations/500_AggregatedDataExperiments/data_all
-simulations/500_AggregatedDataExperiments/plots_all
 simulations/500_AggregatedDataExperiments/plots_bymethod
 
 simulations/600_AggregatedDataFull/data_all
-simulations/600_AggregatedDataFull/plots_all
 simulations/600_AggregatedDataFull/plots_bymethod
