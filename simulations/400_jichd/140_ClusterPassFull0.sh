@@ -6,7 +6,7 @@
 #SBATCH --mem-per-cpu=1gb
 #SBATCH --time=02:00:00
 #SBATCH --output=400_jichd/outputs1/logs/output%a.out
-#SBATCH --array=0-9
+#SBATCH --array=0
 
 pwd; hostname; date
 
