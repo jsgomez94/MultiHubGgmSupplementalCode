@@ -42,7 +42,7 @@ sim_par_table <- expand.grid(
   diagonal_shift  = c(2,5),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  p               = c(100, 200, 300))
 attach(sim_par_table)
 
 
@@ -85,7 +85,7 @@ method_names_clean <- c(
 
 output_merged <- NULL
 
-for(p_val in c(100, 200, 500)) {
+for(p_val in c(100, 200, 300)) {
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
@@ -149,7 +149,7 @@ p1 <- output_merged %>%
   mutate(
     ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
     ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-    p_name   = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500"))) %>%
+    p_name   = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300"))) %>%
 
   ggplot(aes(x = n, y = log(MeanTime, base = 60))) + 
     geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 

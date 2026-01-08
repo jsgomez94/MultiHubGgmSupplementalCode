@@ -41,7 +41,7 @@ sim_par_table <- expand.grid(
   #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  p               = c(100, 200, 300))
 attach(sim_par_table)
 
 

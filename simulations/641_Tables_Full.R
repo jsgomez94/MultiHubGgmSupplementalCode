@@ -47,7 +47,7 @@ sim_par_table <- expand.grid(
   #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  p               = c(100, 200, 300))
 attach(sim_par_table)
 
 
@@ -89,7 +89,7 @@ method_names_clean <- c(
 
 outputs_merged_list <- list()
 
-for (p_val in c(100,200,500)) {
+for (p_val in c(100,200,300)) {
   
   ##############################
   ##############################
@@ -256,7 +256,7 @@ dim(output_merged)
 
 ##################################################################
 ##################################################################
-###################### Generating Table: p=500, pI = 0.05
+###################### Generating Table: p=300, pI = 0.05
 ##################################################################
 ##################################################################
 
@@ -266,7 +266,7 @@ add_par <- function(x) {
 
 output_summarised25 <- output_merged %>%
     dplyr::select(!starts_with("var")) %>%      
-    filter(p == 500, ph2 == 0.05, ph1 == 0.25, T0 == 500, ph2 == 0.05) %>%
+    filter(p == 300, ph2 == 0.05, ph1 == 0.25, T0 == 300, ph2 == 0.05) %>%
     group_by(TASK_ID, p, T0, n, ph1, ph2, METHOD) %>%
     summarise(
         TPR25 = paste(round(mean(tp), 2), add_par(round(sd(tp), 2))),
@@ -277,7 +277,7 @@ output_summarised25 <- output_merged %>%
 
 output_summarised50 <- output_merged %>%
     dplyr::select(!starts_with("var")) %>%
-    filter(p == 500, ph2 == 0.05, ph1 == 0.5, , T0 == 500, ph2 == 0.05) %>%      
+    filter(p == 300, ph2 == 0.05, ph1 == 0.5, , T0 == 300, ph2 == 0.05) %>%      
     group_by(TASK_ID, p, T0, n, ph1, ph2, METHOD) %>%
     summarise(
         TPR50 = paste(round(mean(tp), 2), add_par(round(sd(tp), 2))),

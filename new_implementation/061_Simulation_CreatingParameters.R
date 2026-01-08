@@ -78,7 +78,7 @@ CreateParameters <- function(id_task, runtype = c(1, 2, 3)) {
     #n_prop          = c(0.25, 0.5, 0.75, 1),
     n_prop          = c(0.5, 0.75, 1, 1.25),
     T0_prop         = c(0.5, 0.75, 1),
-    p               = c(100, 200, 500))
+    p               = c(100, 200, 300))
 
   args <- sim_par_table[id_task, ]
   args_list <- list()

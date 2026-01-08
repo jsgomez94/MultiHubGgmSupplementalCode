@@ -88,7 +88,7 @@ sim_par_table <- expand.grid(
     #n_prop          = c(0.25, 0.5, 0.75, 1),
     n_prop          = c(1.25, 1.5, 2, 3, 5),
     T0_prop         = c(0.5, 0.75, 1),
-    p               = c(100, 200, 500, 1000))
+    p               = c(100, 200, 300, 1000))
 sim_par_table$T0 <- sim_par_table$p * sim_par_table$T0_prop
 attach(sim_par_table)
 
@@ -96,7 +96,7 @@ attach(sim_par_table)
 ############################################
 
 for(d_shift in c(1, 2, 5)) {
-  for(p_val in c(100, 200, 500)) {
+  for(p_val in c(100, 200, 300)) {
     
     ## Set simulation parameters:
     sim_ind_load    <- which(diagonal_shift == d_shift & p == p_val)

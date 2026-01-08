@@ -44,7 +44,7 @@ sim_par_table <- expand.grid(
   #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  p               = c(100, 200, 300))
 attach(sim_par_table)
 
 
@@ -88,7 +88,7 @@ outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2,5)) {
-  for (p_val in c(100,200,500)) {
+  for (p_val in c(100,200,300)) {
   
     ##############################
     ##############################
@@ -333,7 +333,7 @@ for (ph1_val in c(0.25, 0.5)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       TPR = mean) %>%
     ggplot(aes(x = n, y = TPR)) + 
@@ -377,7 +377,7 @@ for (ph1_val in c(0.25, 0.5)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       FPR = mean) %>%
     ggplot(aes(x = n, y = FPR)) + 
@@ -423,7 +423,7 @@ for (ph1_val in c(0.25, 0.5)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Precision = mean) %>%
     ggplot(aes(x = n, y = Precision)) + 
@@ -468,7 +468,7 @@ for (ph1_val in c(0.25, 0.5)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Recall = mean) %>%
     ggplot(aes(x = n, y = Recall)) + 
@@ -513,7 +513,7 @@ for (ph1_val in c(0.25, 0.5)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Fscore = mean) %>%
     ggplot(aes(x = n, y = Fscore)) + 
