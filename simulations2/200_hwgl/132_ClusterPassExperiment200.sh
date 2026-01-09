@@ -6,12 +6,12 @@
 #SBATCH --mem-per-cpu=1gb
 #SBATCH --time=02:00:00
 #SBATCH --output=200_hwgl/experiments1/logs/output%a.out
-#SBATCH --array=1450-2889
+#SBATCH --array=10-1449
 
 pwd; hostname; date
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo This is task $SLURM_ARRAY_TASK_ID
+echo This is task $(($SLURM_ARRAY_TASK_ID + 1440))
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a
@@ -24,8 +24,8 @@ echo a
 echo a
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo 3 Running 200_hwgl/123_SimulationScript.R with input $SLURM_ARRAY_TASK_ID 2
-Rscript 200_hwgl/123_SimulationScript.R $SLURM_ARRAY_TASK_ID 2
+echo 3 Running 200_hwgl/123_SimulationScript.R with input $(($SLURM_ARRAY_TASK_ID + 1440)) 2
+Rscript 200_hwgl/123_SimulationScript.R $(($SLURM_ARRAY_TASK_ID + 1440)) 2
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a
