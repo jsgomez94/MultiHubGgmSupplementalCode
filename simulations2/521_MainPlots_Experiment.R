@@ -36,8 +36,8 @@ sim_par_table <- expand.grid(
   r1              = c(5),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.05, 0.25, 0.5),
-  ph1             = c(0.25, 0.5),
+  ph2             = c(0.25, 0.5),
+  ph1             = c(0.25, 0.5, 0.75),
     
   nsim            = ifelse(runtype <= 2, 2, 5),
   diagonal_shift  = c(2,5),

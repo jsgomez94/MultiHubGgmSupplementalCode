@@ -34,14 +34,15 @@ sim_par_table <- expand.grid(
   r1              = c(5),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.05, 0.25, 0.5),
-  ph1             = c(0.25, 0.5),
+  ph2             = c(0.25, 0.5),
+  ph1             = c(0.25, 0.5, 0.75),
     
   nsim            = ifelse(runtype <= 2, 2, 5),
   diagonal_shift  = c(2,5),
+  #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  p               = c(100, 200, 300))
 attach(sim_par_table)
 
 
