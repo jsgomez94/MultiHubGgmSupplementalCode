@@ -542,7 +542,7 @@ r.sparse.pdhubmat_list <- function(
     pm_list[[k]] <- theta_list[[k]] + .I
   }
   
-  return(.pm_list)
+  return(pm_list)
 }
 
 
