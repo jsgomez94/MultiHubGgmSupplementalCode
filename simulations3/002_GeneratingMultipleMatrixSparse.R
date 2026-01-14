@@ -59,6 +59,19 @@ examples = FALSE
   return(.A)
 }
 
+.adjmat_list <- function(p, K, T0, Hjoint, Hind_list, ph1, ph2, pnh, pneff) {
+  
+  .Hind   <- unlist(Hind_list)
+  
+  .Ajoint <- .adjmat(p, T0, H1 = Hjoint, H2 = .Hind, ph1 = ph1, ph2 = 0, pnh =pnh, pneff = pneff)
+  .Aind_list <- list()
+  for (k in 1:K) {
+    .Aind_list[[k]] <- .adjmat(p, T0, H1 = Hjoint, H2 = Hind_list[[k]], ph1 = 0, ph2 = ph2, pnh = 0, pneff = 0)
+  }
+
+  output <- list(Ajoint = .Ajoint, Aind_list = .Aind_list)
+  return(output)
+}
 
 .rsign <- function(n = 1) {
   return(2*rbinom(n,1,0.5)-1)
@@ -296,6 +309,38 @@ examples = FALSE
   return( .theta )
 }
 
+
+
+
+.rhubmat_list <- function(
+    p, T0, K, Hjoint, Hind_list, 
+    ph1, ph2, pnh, pneff, 
+    shuffle = FALSE, type = c("unif", "gaussian"),
+    hmin1 = 0.5, hmax1 = 0.8,
+    hmin2 = 0.5, hmax2 = 0.8,
+    nhmin = 0.5, nhmax = 0.8,
+    neffmin = 0.5, neffmax = 0.8,
+    hsd1 = 5, hsd2 = 5, nhsd = 1, neffsd = 0.5){
+  
+  A <- .adjmat_list(p, K, T0, Hjoint, Hind_list, ph1, ph2, pnh, pneff)
+  Hind   <- unlist(Hind_list)
+  theta = .rsymmmatrix(
+    p, T0, Hjoint, Hind,
+    type = type,
+    hmin1 = hmin1, hmax1 = hmax1,
+    hmin2 = hmin2, hmax2 = hmax2,
+    nhmin = nhmin, nhmax = nhmax,
+    neffmin = neffmin, neffmax = neffmax,
+    hsd1 = hsd1, hsd2 = hsd2, nhsd = nhsd, neffsd = nseffsd)
+  
+  theta_list <- list()
+  for (k in 1:K) {
+    theta_list[[k]] = theta * (A$Ajoint + A$Aind_list[[k]]) 
+  }
+  
+  return(theta_list)
+}
+
 ## With this functions, we are able to select the 
 ## network structure of the precision matrix. Now,
 ## we have to design methods that select the value
@@ -459,6 +504,50 @@ r.sparse.pdhubmat <- function(
   .pm = .pm + .I
   return(.pm)
 }
+
+
+
+
+
+
+r.sparse.pdhubmat_list <- function(
+    p, T0, K, Hjoint, Hind_list, ph1, ph2, pnh, pneff,
+    diagonal_shift = 1, shuffle = FALSE, type = c("unif", "gaussian"),
+    hmin1 = 0.5, hmax1 = 0.8,
+    hmin2 = 0.5, hmax2 = 0.8,
+    nhmin = 0.5, nhmax = 0.8,
+    neffmin = 0.5, neffmax = 0.8,
+    hsd1 = 1, hsd2 = 1, nhsd = 1, neffsd = 0.5,
+    verbose = FALSE){
+  
+  theta_list <- .rhubmat_list(
+    p, T0, K, Hjoint, Hind_list, 
+    ph1, ph2, pnh, pneff, 
+    shuffle, type,
+    hmin1, hmax1,
+    hmin2, hmax2,
+    nhmin, nhmax,
+    neffmin, neffmax,
+    hsd1, hsd2, nhsd, neffsd)
+    
+    lambda <- lapply(
+      theta_list, 
+      function(theta) return(min(eigen(theta)$values)) )  %>% 
+      unlist() %>% 
+      min()
+  
+  .I <- (-lambda + diagonal_shift) * diag(p)
+  pm_list <- list()
+  for (k in 1:K) {
+    pm_list[[k]] <- theta_list[[k]] + .I
+  }
+  
+  return(.pm_list)
+}
+
+
+
+
 
 ######################
 ######################

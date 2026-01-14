@@ -76,7 +76,7 @@ CreateParameters <- function(id_task, runtype = c(1, 2, 3)) {
     nsim            = ifelse(runtype <= 2, 2, 5),
     diagonal_shift  = c(2,5),
     n_prop          = c(0.5, 0.75, 1, 1.25),
-    T0_prop         = c(0.5, 0.75, 1),
+    T0_prop         = c(1),
     p               = c(100, 200, 400))
 
   args <- sim_par_table[id_task, ]
