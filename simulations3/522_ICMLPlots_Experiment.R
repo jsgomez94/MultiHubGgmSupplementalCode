@@ -87,7 +87,7 @@ outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2,5)) {
-  for (p_val in c(100,200,300)) {
+  for (p_val in c(100,200,400)) {
   
     ##############################
     ##############################
@@ -322,7 +322,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 300),
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -332,7 +332,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
       TPR = mean) %>%
     ggplot(aes(x = n, y = TPR)) + 
@@ -366,7 +366,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 300),
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -376,7 +376,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
       FPR = mean) %>%
     ggplot(aes(x = n, y = FPR)) + 
@@ -412,7 +412,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 300),
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -422,7 +422,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
       Precision = mean) %>%
     ggplot(aes(x = n, y = Precision)) + 
@@ -457,7 +457,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 300),
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -467,7 +467,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
       Recall = mean) %>%
     ggplot(aes(x = n, y = Recall)) + 
@@ -502,7 +502,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 300),
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -512,7 +512,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
       Fscore = mean) %>%
     ggplot(aes(x = n, y = Fscore)) + 
