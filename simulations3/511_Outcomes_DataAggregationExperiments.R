@@ -13,7 +13,7 @@ library(tibble)
 library(dplyr)
 library(stringr)
 library(lazyeval)
-source()
+
 
 ###################### Parameter table:
 runtype       <- 2 # FOR EXPERIMENT RUNS
@@ -96,7 +96,7 @@ run_info <- list(
 
 ###########################
 ## LOOP OVER ALL 288 SIMULATION PARAMETER COMBINATIONS
-for (id_task in 1:432) {
+for (id_task in 1:144) {
   print(paste("XXXXXXXXXXXXXXXX ID-TASK", id_task))
 
   output <- NULL

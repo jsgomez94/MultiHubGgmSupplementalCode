@@ -74,21 +74,25 @@ method_names <- c(
     "COR_Scr_IPCHD", 
     "COR_Thr_IPCHD",
     "ST.OVER.CORR.IM",
-    "ST.OVER.THR.IM")
+    "ST.OVER.THR.IM",
+    "ST.ORAC.CORR.IM",
+    "ST.ORAC.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
     "HWGL",        ## HWGL-methdos.
     "IPC-HD: Screening",
     "IPC-HD: Thresholding",
     "JIC-HD: Sample Cov",
-    "JIC-HD: Thresholding")
+    "JIC-HD: Thresholding",
+    "JIC-HD: Orac Sample",
+    "JIC-HD: Orac Thr")
 
 
 outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2,5)) {
-  for (p_val in c(100,200,400)) {
+  for (p_val in c(100,200,300)) {
   
     ##############################
     ##############################
@@ -323,7 +327,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 400),
+      p %in% c(100, 200, 300),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -333,17 +337,17 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       TPR = mean) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
@@ -367,7 +371,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 400),
+      p %in% c(100, 200, 300),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -377,17 +381,17 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       FPR = mean) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
@@ -413,7 +417,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 400),
+      p %in% c(100, 200, 300),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -423,17 +427,17 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Precision = mean) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
@@ -458,7 +462,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 400),
+      p %in% c(100, 200, 300),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -468,17 +472,17 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Recall = mean) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
@@ -503,7 +507,7 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(100, 200, 400),
+      p %in% c(100, 200, 300),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -513,17 +517,17 @@ for (ph1_val in c(0.25, 0.5, 0.75)) {
     mutate(
       ph1_name = ifelse(ph1 == 0.25, "p[C] == 0.25", ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.75")),
       ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 300")),
       METHOD   = factor(METHOD),
       Fscore = mean) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       #geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.1) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
