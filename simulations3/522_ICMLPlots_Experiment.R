@@ -315,7 +315,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -359,7 +359,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -405,7 +405,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -449,7 +449,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -493,7 +493,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
@@ -571,7 +571,7 @@ for (p_val in c(100, 200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -613,7 +613,7 @@ for (p_val in c(100, 200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -657,7 +657,7 @@ for (p_val in c(100, 200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -700,7 +700,7 @@ for (p_val in c(100, 200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -743,7 +743,7 @@ for (p_val in c(100, 200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 4)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
