@@ -490,7 +490,6 @@ for (diag_shift_val in c(2,5)) {
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       scale_linetype_manual(values = c(2, 3, 4, 1)) +
       scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
       scale_shape_manual(values = c(2, 5, 13, 19)) +
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +

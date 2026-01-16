@@ -28,20 +28,19 @@ sim_par_table <- expand.grid(
   type          = "unif",
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
-    
+  
   r2              = c(3),
   r1              = c(5),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.05, 0.25, 0.5),
-  ph1             = c(0.25, 0.5),
+  ph2             = c(0.3, 0.5),
+  ph1             = c(0.3, 0.4, 0.5),
     
   nsim            = ifelse(runtype <= 2, 2, 5),
   diagonal_shift  = c(2,5),
-  #n_prop          = c(0.25, 0.5, 0.75, 1),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 300))
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
@@ -96,7 +95,7 @@ run_info <- list(
 
 ###########################
 ## LOOP OVER ALL 288 SIMULATION PARAMETER COMBINATIONS
-for (id_task in 1:432) {
+for (id_task in 1:144) {
   print(paste("XXXXXXXXXXXXXXXX ID-TASK", id_task))
 
   output <- NULL
