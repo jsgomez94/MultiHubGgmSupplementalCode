@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=1gb
-#SBATCH --time=18:00:00
+#SBATCH --time=36:00:00
 #SBATCH --output=200_hwgl/outputs1/logs/output%a.out
 #SBATCH --array=10-489
 

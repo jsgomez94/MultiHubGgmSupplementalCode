@@ -73,7 +73,7 @@ CreateParameters <- function(id_task, runtype = c(1, 2, 3)) {
     ph2             = c(0.3, 0.5),
     ph1             = c(0.3, 0.4, 0.5),
     
-    nsim            = ifelse(runtype <= 2, 2, 5),
+    nsim            = ifelse(runtype <= 2, 2, 10),
     diagonal_shift  = c(2,5),
     n_prop          = c(0.5, 0.75, 1, 1.25),
     T0_prop         = c(1),

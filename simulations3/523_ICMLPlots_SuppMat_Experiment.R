@@ -304,23 +304,17 @@ output_summarised <- output_merged %>%
 T0_prop_val <- 1
 
 for (diag_shift_val in c(2,5)) {
-for (ph1_val in c(0.3, 0.4, 0.5)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
-
-  ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_TPR",
+    "523_ICML_TPR",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 8, height = 6)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
-      ph1 == ph1_val,
-      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -345,26 +339,21 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
   dev.off()
 
-
-  ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_FPR",
+    "523_ICML_FPR",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 8, height = 6)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
-      ph1 == ph1_val,
-      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -390,27 +379,21 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
   dev.off()
 
-
-
-  ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_prec",
+    "523_ICML_prec",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 8, height = 6)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
-      ph1 == ph1_val,
-      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -427,6 +410,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       scale_linetype_manual(values = c(2, 3, 4, 1)) +
       scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
       scale_shape_manual(values = c(2, 5, 13, 19)) +
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
@@ -435,26 +419,21 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
   dev.off()
 
-
-  ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_rcll",
+    "523_ICML_rcll",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 8, height = 6)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
-      ph1 == ph1_val,
-      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -471,6 +450,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       scale_linetype_manual(values = c(2, 3, 4, 1)) +
       scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
       scale_shape_manual(values = c(2, 5, 13, 19)) +
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
@@ -479,26 +459,21 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
   dev.off()
 
-
-  ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_fscr",
+    "523_ICML_fscr",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 8, height = 6)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
-      ph1 == ph1_val,
-      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -515,6 +490,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       scale_linetype_manual(values = c(2, 3, 4, 1)) +
       scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
       scale_shape_manual(values = c(2, 5, 13, 19)) +
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
@@ -524,7 +500,7 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
       ylab("F-score") + 
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 
@@ -532,256 +508,4 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   dev.off()
 
 }
-}
-
-#####################################################################################
-#####################################################################################
-#####################################################################################
-## NOW WE FIX P AND VARY PC/PI
-#####################################################################################
-#####################################################################################
-#####################################################################################
-
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", 
-               "#009E73", "#F0E442", "#0072B2", 
-               "#D55E00", "#CC79A7")
-
-output_summarised <- output_merged %>%
-  dplyr::select(!starts_with("var")) %>%
-  pivot_longer(
-    cols          = c("tp", "fp", "fn", "prec", "rcll", "fscr"),
-    names_to      = "eval_par",
-    values_to     = "eval") %>%
-      
-  group_by(METHOD, p, ph1 , ph2, T0, n, eval_par) %>%
-  summarise(mean = mean(eval), sd = sd(eval))
-    
-head(output_summarised)
-T0_prop_val <- 1
-
-for (diag_shift_val in c(2,5)) {
-for (p_val in c(100, 200, 400)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
-
-
-  ## Plot 1: ph = 0.4
-  file_name <- paste0(
-    subfolder_plots_new, 
-    "522_ICML_TPR",
-    "_d", diag_shift_val, 
-    "_p", p_val,
-    ".pdf")
-  pdf(file_name, width = 4, height = 5)
-  ## Plot 1: TPR 
-  p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
-    filter(
-      p == p_val,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
-      ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
-    mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
-      ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD   = factor(METHOD),
-      TPR = mean) %>%
-    ggplot(aes(x = n, y = TPR)) + 
-      geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-      geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-      theme(legend.position="bottom") + 
-      guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
-  print(p1)
-  dev.off()
-
-
-  ## Plot 1: ph = 0.4
-  file_name <- paste0(
-    subfolder_plots_new, 
-    "522_ICML_FPR",
-    "_d", diag_shift_val, 
-    "_p", p_val,
-    ".pdf")
-  pdf(file_name, width = 4, height = 5)
-  ## Plot 1: TPR 
-  p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
-    filter(
-      p == p_val,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
-      ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
-    mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
-      ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD   = factor(METHOD),
-      FPR = mean) %>%
-    ggplot(aes(x = n, y = FPR)) + 
-      geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-      geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #geom_hline(yintercept = c(0), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-      theme(legend.position="bottom") + 
-      guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
-  print(p1)
-  dev.off()
-
-
-
-  ## Plot 1: ph = 0.4
-  file_name <- paste0(
-    subfolder_plots_new, 
-    "522_ICML_prec",
-    "_d", diag_shift_val, 
-    "_p", p_val,
-    ".pdf")
-  pdf(file_name, width = 4, height = 5)
-  ## Plot 1: TPR 
-  p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
-    filter(
-      p == p_val,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
-      ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
-    mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
-      ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD   = factor(METHOD),
-      Precision = mean) %>%
-    ggplot(aes(x = n, y = Precision)) + 
-      geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-      geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #geom_hline(yintercept = c(0), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-      theme(legend.position="bottom") + 
-      guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
-  print(p1)
-  dev.off()
-
-
-  ## Plot 1: ph = 0.4
-  file_name <- paste0(
-    subfolder_plots_new, 
-    "522_ICML_rcll",
-    "_d", diag_shift_val, 
-    "_p", p_val,
-    ".pdf")
-  pdf(file_name, width = 4, height = 5)
-  ## Plot 1: TPR 
-  p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
-    filter(
-      p == p_val,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
-      ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
-    mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
-      ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD   = factor(METHOD),
-      Recall = mean) %>%
-    ggplot(aes(x = n, y = Recall)) + 
-      geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-      geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #geom_hline(yintercept = c(0), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-      theme(legend.position="bottom") + 
-      guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
-  print(p1)
-  dev.off()
-
-
-  ## Plot 1: ph = 0.4
-  file_name <- paste0(
-    subfolder_plots_new, 
-    "522_ICML_fscr",
-    "_d", diag_shift_val, 
-    "_p", p_val,
-    ".pdf")
-  pdf(file_name, width = 4, height = 5)
-  ## Plot 1: TPR 
-  p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
-    filter(
-      p == p_val,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
-      ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
-    mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
-      ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
-      p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD   = factor(METHOD),
-      Fscore = mean) %>%
-    ggplot(aes(x = n, y = Fscore)) + 
-      geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-      geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #geom_hline(yintercept = c(0), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
-      ylab("F-score") + 
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-      theme(legend.position="bottom") + 
-      guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
-
-  print(p1)
-  dev.off()
-
-}
-}
-
-
 
