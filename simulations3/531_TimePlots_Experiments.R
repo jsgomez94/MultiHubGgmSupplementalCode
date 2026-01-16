@@ -18,7 +18,7 @@ diag_shift_val <- as.numeric(input[1])
 T0_prop_val    <- as.numeric(input[2])
 
 ###################### Parameter table:
-runtype       <- 3 # FOR FULL SIMULATIONS
+runtype       <- 2 # FOR EXPERIMENTS
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,
@@ -35,14 +35,14 @@ sim_par_table <- expand.grid(
   r1              = c(5),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.05, 0.25, 0.5),
-  ph1             = c(0.25, 0.5),
+  ph2             = c(0.3, 0.5),
+  ph1             = c(0.3, 0.4, 0.5),
     
   nsim            = ifelse(runtype <= 2, 2, 5),
   diagonal_shift  = c(2,5),
   n_prop          = c(0.5, 0.75, 1, 1.25),
-  T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 500))
+  T0_prop         = c(1),
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
@@ -80,16 +80,17 @@ method_names_clean <- c(
     "IPC-HD: Screening",
     "IPC-HD: Threshold",
     "JIC-HD: Sample Cov",
-    "JIC-HD: Thresholded Cov")
+    "JIC-HD: Threshold")
 
 
 output_merged <- NULL
 
-for(p_val in c(100, 200, 500)) {
+for(diag_shift_val in c(2,5)) {
+for (p_val in c(100, 200, 400)) {
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
-  sim_ind_load    <- which(T0_prop == T0_prop_val & p == p_val & diagonal_shift == diag_shift_val)
+  sim_ind_load    <- which(T0_prop == 1 & p == p_val & diagonal_shift == diag_shift_val)
   type            <- "all"
   results_dir     <- paste0(subfolder_new, "plots_", type, "/")
 
@@ -134,38 +135,60 @@ for(p_val in c(100, 200, 500)) {
 
 }
 
-
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", 
+               "#009E73", "#F0E442", "#0072B2", 
+               "#D55E00", "#CC79A7")
+gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 ## Plot 1: ph = 0.4
 file_name <- paste0(
   subfolder_time_new, 
   "531_logtime",
   "_d", diag_shift_val, 
-  "_T0prop", T0_prop_val,
   ".pdf")
-pdf(file_name, width = 7, height = 7)
+pdf(file_name, width = 5, height = 4)
 p1 <- output_merged %>%
+  filter(
+    METHOD != "IPC-HD: Screening",
+    METHOD != "JIC-HD: Threshold",
+    ph1 == 0.4) %>%
+  mutate(
+    METHOD = ifelse(METHOD == "IPC-HD: Threshold", "IPC-HD", METHOD),
+    METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
 
   mutate(
-    ph1_name = ifelse(ph1 == 0.5, "p[C] == 0.5", "p[C] == 0.25"),
-    ph2_name = ifelse(ph2 == 0.5, "p[I] == 0.5", ifelse(ph2 == 0.25, "p[I] == 0.25", "p[I] == 0.05")),
-    p_name   = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 500"))) %>%
+    ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1== 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+    ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
+    p_name   = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
+    METHOD = factor(METHOD)) %>%
 
   ggplot(aes(x = n, y = log(MeanTime, base = 60))) + 
+    #geom_ribbon(aes(ymin = MeanTime - SdTime, ymax = MeanTime + SdTime, fill = METHOD), alpha = 0.3) +
     geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
     geom_point(aes(col = METHOD, shape = METHOD)) + 
     geom_hline(yintercept = c(0, 0.56, 1, 1.56, 2), linetype = 2, linewidth = 0.25) +
     ylab(expression(log[60]("seconds"))) +
     xlab("Sample Size n") +
-    #annotate("text", x = p * 0.93, y = 0.15, label = "1 s", size = 2.5) + 
-    #annotate("text", x = p * 0.93, y = 0.71, label = "10 s", size = 2.5) +
-    #annotate("text", x = p * 0.93, y = 1.15, label = "1 m", size = 2.5) + 
-    #annotate("text", x = p * 0.93, y = 1.71, label = "10 m", size = 2.5) + 
-    #annotate("text", x = p * 0.93, y = 2.15, label = "1 h", size = 2.5) + 
+    annotate("text", x = 25, y = 0.15, label = "     1 s", size = 2.5) + 
+    annotate("text", x = 25, y = 0.71, label = "     10 s", size = 2.5) +
+    annotate("text", x = 25, y = 1.15, label = "     1 m", size = 2.5) + 
+    annotate("text", x = 25, y = 1.71, label = "     10 m", size = 2.5) + 
+    annotate("text", x = 25, y = 2.15, label = "     1 h", size = 2.5) + 
+    scale_linetype_manual(values = c(2, 3, 4, 1)) +
+    scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+    scale_shape_manual(values = c(2, 5, 13, 19)) +
+    scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+    scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      
     theme(legend.title = element_blank()) +
     facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
-    theme(legend.position="bottom")
+    theme(legend.position="bottom") + 
+    guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 print(p1)
 dev.off()
-  
 
+output_merged <- NULL
+output_merged_gl <- NULL
+output_merged_jic <- NULL
+
+}

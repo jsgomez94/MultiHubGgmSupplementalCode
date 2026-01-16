@@ -311,7 +311,7 @@ for (diag_shift_val in c(2,5)) {
     "523_ICML_TPR",
     "_d", diag_shift_val, 
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -350,7 +350,7 @@ for (diag_shift_val in c(2,5)) {
     "523_ICML_FPR",
     "_d", diag_shift_val, 
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -376,7 +376,8 @@ for (diag_shift_val in c(2,5)) {
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
+      geom_hline(yintercept = c(0), linetype = c(2)) +
+      geom_hline(yintercept = c(0.2), linetype = c(0)) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
       facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
@@ -390,7 +391,7 @@ for (diag_shift_val in c(2,5)) {
     "523_ICML_prec",
     "_d", diag_shift_val, 
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -430,7 +431,7 @@ for (diag_shift_val in c(2,5)) {
     "523_ICML_rcll",
     "_d", diag_shift_val, 
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -470,7 +471,7 @@ for (diag_shift_val in c(2,5)) {
     "523_ICML_fscr",
     "_d", diag_shift_val, 
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
