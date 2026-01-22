@@ -305,17 +305,17 @@ T0_prop_val <- 1
 
 for (diag_shift_val in c(2,5)) {
 for (ph1_val in c(0.3, 0.4, 0.5)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_TPR",
+    "621_ICML_TPR",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -355,11 +355,11 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_FPR",
+    "621_ICML_FPR",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -401,11 +401,11 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_prec",
+    "621_ICML_prec",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -445,11 +445,11 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_rcll",
+    "621_ICML_rcll",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -489,11 +489,11 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_fscr",
+    "621_ICML_fscr",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
@@ -561,17 +561,17 @@ T0_prop_val <- 1
 
 for (diag_shift_val in c(2,5)) {
 for (p_val in c(100, 200, 400)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_TPR",
+    "622_ICML_TPR",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -609,11 +609,11 @@ for (p_val in c(100, 200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_FPR",
+    "622_ICML_FPR",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -653,11 +653,11 @@ for (p_val in c(100, 200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_prec",
+    "622_ICML_prec",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -696,11 +696,11 @@ for (p_val in c(100, 200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_rcll",
+    "622_ICML_rcll",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -739,11 +739,11 @@ for (p_val in c(100, 200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_fscr",
+    "622_ICML_fscr",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 4, height = 5)
+  pdf(file_name, width = 5, height = 3.8)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(

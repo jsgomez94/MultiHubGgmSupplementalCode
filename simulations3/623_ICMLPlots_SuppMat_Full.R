@@ -308,7 +308,7 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "523_ICML_TPR",
+    "623_ICML_TPR",
     "_d", diag_shift_val, 
     ".pdf")
   pdf(file_name, width = 8, height = 6)
@@ -347,7 +347,7 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "523_ICML_FPR",
+    "623_ICML_FPR",
     "_d", diag_shift_val, 
     ".pdf")
   pdf(file_name, width = 8, height = 6)
@@ -376,9 +376,8 @@ for (diag_shift_val in c(2,5)) {
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0,1), linetype = 2) +
-      #geom_hline(yintercept = c(0), linetype = 2) +
-      #facet_grid(rows = vars(ph2), cols = vars())
+      geom_hline(yintercept = c(0), linetype = 2) +
+      geom_hline(yintercept = c(0.2), linetype = 0) +
       facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -387,7 +386,7 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "523_ICML_prec",
+    "623_ICML_prec",
     "_d", diag_shift_val, 
     ".pdf")
   pdf(file_name, width = 8, height = 6)
@@ -427,7 +426,7 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "523_ICML_rcll",
+    "623_ICML_rcll",
     "_d", diag_shift_val, 
     ".pdf")
   pdf(file_name, width = 8, height = 6)
@@ -467,7 +466,7 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "523_ICML_fscr",
+    "623_ICML_fscr",
     "_d", diag_shift_val, 
     ".pdf")
   pdf(file_name, width = 8, height = 6)
