@@ -234,7 +234,13 @@ examples = FALSE
 ##          by metric projection.
 .sgd.stiefel <- function(
   sigmalist, p, ndir, K, type = c("M", "exp"),
-  nstarts = 10, alpha = 0.01, max.iter = 10) {
+  nstarts = 10, alpha = 0.01, max.iter = 10, 
+  warm.start = NULL) {
+  
+  
+  if (!is.null(warm.start)) {
+    nstarts <- nstarts + 1
+  }
   
   ## Define objects:
   .fmatrix <- matrix(0, ncol = max.iter, nrow = nstarts)
@@ -243,10 +249,20 @@ examples = FALSE
   
   for (.start in 1:nstarts) {
     
-    ## Define starting points / starting values.
-    .Vit <- .rand.orthonormal(p, ndir)
-    .init.points[[.start]] <- .Vit
-
+    if(.start == 1 && !is.null(warm.start)) {
+      .vnew <- rnorm(p)
+      .vnew <- .vnew / sqrt(sum(.vnew^2))
+      
+      .Vit <- cbind(warm.start, .vnew)
+      
+      .Vit <- svd(.Vit)$u
+      
+    } else {
+      ## Define starting points / starting values.
+      .Vit <- .rand.orthonormal(p, ndir)
+      .init.points[[.start]] <- .Vit
+    }
+    
     if (!.is.stiefel(V0 = .Vit)) {
       print(paste("Error (",.start,",", .it,"): Update point outside the Stiefel manifold."))
     }
@@ -288,15 +304,16 @@ examples = FALSE
 ## Step 7: Final function for the optimization of
 ##          the objective on the Stiefel manifold
 sgd.stiefel <- function(
-  sigmalist, p, ndir, K, type = c("M", "exp"), 
-  nstarts = 10, alpha = 0.01, max.iter = 10) {
+    sigmalist, p, ndir, K, type = c("M", "exp"), 
+    nstarts = 10, alpha = 0.01, max.iter = 10, warm.start = NULL) {
   
   ## Find the convergence points.
   .stiefel <- .sgd.stiefel(
     sigmalist = sigmalist, p = p, ndir = ndir,
     K = K, type = type, 
     nstarts = nstarts, 
-    alpha = alpha, max.iter = max.iter)
+    alpha = alpha, max.iter = max.iter, 
+    warm.start = warm.start)
   
   ## Find the eigenvalues.
   .chosen.start <- which.min(.stiefel$fmatrix[, max.iter])
