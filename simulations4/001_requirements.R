@@ -22,11 +22,11 @@ print("Installing packages in directories:")
 print(.libPaths())
 
 ## For 01_GeneratingMatrixSparse.R
-#if(!require(plot.matrix)){
-#  .libPaths(req_lib_dir)
-#  install.packages("plot.matrix", repos = "https://archive.linux.duke.edu/cran/")
-#  library(plot.matrix)
-#}
+if(!require(plot.matrix)){
+  .libPaths(req_lib_dir)
+  install.packages("plot.matrix", repos = "https://archive.linux.duke.edu/cran/")
+  library(plot.matrix)
+}
 
 ## For 02_BIC.R
 if(!require(magrittr)){

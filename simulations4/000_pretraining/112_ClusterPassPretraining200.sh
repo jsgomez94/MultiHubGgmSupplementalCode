@@ -6,7 +6,7 @@
 #SBATCH --mem-per-cpu=2gb
 #SBATCH --time=2-12:00:00
 #SBATCH --output=000_pretraining/pretrainings1/logs/output%a.out
-#SBATCH --array=145-288
+#SBATCH --array=1-36
 
 pwd; hostname; date
 

@@ -44,7 +44,8 @@ FullSimulation <- function(args, index) {
       .pmlist <- r.sparse.pdhubmat_list(
         p = args$p, T0 = args$T0, K = args$K,
         Hjoint = args$Hjoint, Hind_list = args$Hind,
-        ph1 = args$ph1, ph2 = args$ph2,
+        ph1min = args$ph1min, ph1max = args$ph1max,
+        ph2min = args$ph2min, ph2max = args$ph2max,
         pnh = args$pnh, pneff = args$pneff,
         diagonal_shift = args$diagonal_shift,
         shuffle = args$shuffle, type = args$type,
@@ -53,21 +54,6 @@ FullSimulation <- function(args, index) {
         nhmin = args$nhmin, nhmax = args$nhmax,
         neffmin = args$neffmin, neffmax = args$neffmax,
         verbose = FALSE)
-
-      #.pmlist   <- lapply(
-      #  1:args$K, function(k) {
-      #  return(r.sparse.pdhubmat(
-      #  p = args$p, T0 = args$T0,
-      #  H1 = args$Hjoint, H2 = args$Hind[[k]],
-      #  ph1 = args$ph1, ph2 = args$ph2,
-      #  pnh = args$pnh, pneff = args$pneff,
-      #  diagonal_shift = args$diagonal_shift,
-      #  shuffle = args$shuffle, type = args$type,
-      #  hmin1 = args$hmin1, hmax1 = args$hmax1,
-      #  hmin2 = args$hmin2, hmax2 = args$hmax2,
-      #  nhmin = args$nhmin, nhmax = args$nhmax,
-      #  neffmin = args$neffmin, neffmax = args$neffmax,
-      #  verbose = FALSE))} )
       
       .covlist  <- lapply(.pmlist, solve)
       .iclist   <- lapply(.covlist, .COVtoCOR)

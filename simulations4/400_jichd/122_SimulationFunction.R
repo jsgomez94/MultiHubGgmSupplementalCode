@@ -43,7 +43,8 @@ FullSimulation <- function(args, index) {
       .pmlist <- r.sparse.pdhubmat_list(
         p = args$p, T0 = args$T0, K = args$K,
         Hjoint = args$Hjoint, Hind_list = args$Hind,
-        ph1 = args$ph1, ph2 = args$ph2,
+        ph1min = args$ph1min, ph1max = args$ph1max,
+        ph2min = args$ph2min, ph2max = args$ph2max,
         pnh = args$pnh, pneff = args$pneff,
         diagonal_shift = args$diagonal_shift,
         shuffle = args$shuffle, type = args$type,
@@ -57,7 +58,7 @@ FullSimulation <- function(args, index) {
       #    return(r.sparse.pdhubmat(
       #      p = args$p, T0 = args$T0,
       #      H1 = args$Hjoint, H2 = args$Hind[[k]],
-      #      ph1 = args$ph1, ph2 = args$ph2,
+      #      ph1 = args$ph1, ph2min = args$ph2min, ph2max = args$ph2max,
       #      pnh = args$pnh, pneff = args$pneff,
       #      diagonal_shift = args$diagonal_shift,
       #      shuffle = args$shuffle, type = args$type,

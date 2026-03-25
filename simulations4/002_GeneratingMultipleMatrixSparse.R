@@ -37,7 +37,11 @@ examples = FALSE
 ##  OUTPUT
 ##    .A    : pxp matrix with {0,1} entries. 
 ##
-.adjmat <- function(p, T0, H1, H2, ph1, ph2, pnh, pneff){
+.adjmat <- function(p, T0, H1, H2, ph1min, ph1max, ph2min, ph2max, pnh, pneff){
+  
+  ph1 <- runif(length(H1), ph1min, ph1max)
+  ph2 <- runif(length(H2), ph2min, ph2max)
+
   .A = matrix(rep(0, p*p), ncol = p)
   
   l1 <- length(H1)
@@ -46,12 +50,20 @@ examples = FALSE
   .A[]         <- rbinom(p * p, 1, pneff)
   .A[1:T0, 1:T0] <- rbinom(T0 * T0, 1, pnh)
   if (!is.null(H2)) {
-    .A[1:T0, H2]  <- rbinom(T0 * l2, 1, ph2)
-    .A[H2, (1:T0)[-H2]]  <- rbinom((T0 - l2) * l2, 1, ph2)
+    for (h2_ind in seq_along(H2)) {
+      h2 <- H2[h2_ind]
+      .A[1:T0, h2]  <- rbinom(T0, 1, ph2[h2_ind])
+      .A[h2, (1:T0)[-H2]]  <- rbinom(T0 - l2, 1, ph2[h2_ind])
+      
+    }
   }
   if (!is.null(H1)) {
-    .A[1:T0, H1]  <- rbinom(T0 * l1, 1, ph1)
-    .A[H1, (1:T0)[-H1]]  <- rbinom((T0 - l1) * l1, 1, ph1)
+    for (h1_ind in seq_along(H1)) {
+      h1 <- H1[h1_ind]
+      .A[1:T0, h1]  <- rbinom(T0, 1, ph1[h1_ind])
+      .A[h1, (1:T0)[-H1]]  <- rbinom(T0 - l1 , 1, ph1[h1_ind])
+    }
+    
   }
   .A[upper.tri(.A, TRUE)] <- 0
   
@@ -59,14 +71,23 @@ examples = FALSE
   return(.A)
 }
 
-.adjmat_list <- function(p, K, T0, Hjoint, Hind_list, ph1, ph2, pnh, pneff) {
+.adjmat_list <- function(p, K, T0, Hjoint, Hind_list, ph1min, ph1max, ph2min, ph2max, pnh, pneff) {
   
   .Hind   <- unlist(Hind_list)
   
-  .Ajoint <- .adjmat(p, T0, H1 = Hjoint, H2 = .Hind, ph1 = ph1, ph2 = 0, pnh =pnh, pneff = pneff)
+  .Ajoint <- .adjmat(
+    p, T0, H1 = Hjoint, H2 = .Hind, 
+    ph1min = ph1min, ph1max = ph1max, 
+    ph2min = 0, ph2max = 0, 
+    pnh =pnh, pneff = pneff)
   .Aind_list <- list()
   for (k in 1:K) {
-    .Aind_list[[k]] <- .adjmat(p, T0, H1 = Hjoint, H2 = Hind_list[[k]], ph1 = 0, ph2 = ph2, pnh = 0, pneff = 0)
+    .Aind_list[[k]] <- .adjmat(
+      p, T0, H1 = c(Hjoint, unlist(Hind_list[-k])), 
+      H2 = Hind_list[[k]],  
+      ph1min = 0, ph1max = 0, 
+      ph2min = ph2min, ph2max = ph2max, 
+      pnh = 0, pneff = 0)
   }
 
   output <- list(Ajoint = .Ajoint, Aind_list = .Aind_list)
@@ -285,7 +306,8 @@ examples = FALSE
 ##
 .rhubmat <- function(
   p, T0, H1, H2, 
-  ph1, ph2, pnh, pneff, 
+  ph1min, ph1max, ph2min, ph2max,
+  pnh, pneff, 
   shuffle = FALSE, type = c("unif", "gaussian"),
   hmin1 = 0.5, hmax1 = 0.8,
   hmin2 = 0.5, hmax2 = 0.8,
@@ -293,7 +315,11 @@ examples = FALSE
   neffmin = 0.5, neffmax = 0.8,
   hsd1 = 5, hsd2 = 5, nhsd = 1, neffsd = 0.5){
   
-  .A = .adjmat(p, T0, H1, H2, ph1, ph2, pnh, pneff)
+  .A = .adjmat(
+    p, T0, H1, H2, 
+    ph1min, ph1max, ph2min, ph2max, 
+    pnh, pneff)
+
   .theta = .A * .rsymmmatrix(
     p, T0, H1, H2,
     type = type,
@@ -301,7 +327,7 @@ examples = FALSE
     hmin2 = hmin2, hmax2 = hmax2,
     nhmin = nhmin, nhmax = nhmax,
     neffmin = neffmin, neffmax = neffmax,
-    hsd1 = hsd1, hsd2 = hsd2, nhsd = nhsd, neffsd = nseffsd)
+    hsd1 = hsd1, hsd2 = hsd2, nhsd = nhsd, neffsd = neffsd)
 
   if( shuffle ){
     .theta = .shufflemat(.theta, p)
@@ -314,7 +340,8 @@ examples = FALSE
 
 .rhubmat_list <- function(
     p, T0, K, Hjoint, Hind_list, 
-    ph1, ph2, pnh, pneff, 
+    ph1min, ph1max, ph2min, ph2max,
+    pnh, pneff, 
     shuffle = FALSE, type = c("unif", "gaussian"),
     hmin1 = 0.5, hmax1 = 0.8,
     hmin2 = 0.5, hmax2 = 0.8,
@@ -322,7 +349,11 @@ examples = FALSE
     neffmin = 0.5, neffmax = 0.8,
     hsd1 = 5, hsd2 = 5, nhsd = 1, neffsd = 0.5){
   
-  A <- .adjmat_list(p, K, T0, Hjoint, Hind_list, ph1, ph2, pnh, pneff)
+  A <- .adjmat_list(
+    p, K, T0, Hjoint, Hind_list, 
+    ph1min, ph1max, ph2min, ph2max, 
+    pnh, pneff)
+
   Hind   <- unlist(Hind_list)
   theta = .rsymmmatrix(
     p, T0, Hjoint, Hind,
@@ -351,56 +382,68 @@ examples = FALSE
 ### Example:
 if(examples){
 
-  adjmat = .adjmat(p = 20, t = 10, 
-                   H1 = c(10), H2 = c(4,5), 
-                   ph1 = 1, ph2 = 0.5, pnh = 0)
+  adjmat = .adjmat(p = 20, T0 = 10, 
+                   H1 = c(1,2,3), H2 = c(4,5,6), 
+                   ph1min = 0.9, ph1max = 1, ph2min = 0.1, ph2max = 0.2, pnh = 0, pneff = 0)
+  pdf()
+  library(plot.matrix)
   par(oma = c(0,0,0,2))
   plot(adjmat) 
-  
+  dev.off()
   ## We generate two conventional matrices with
   ## two types of hubs. 
-  rhubmat = .rhubmat(p = 20, t = 10, 
+  rhubmat = .rhubmat(p = 20, T0 = 10, 
                      H1 = c(5), H2 = c(1,2), 
-                     ph1 = 1, ph2 = 0.5, pnh = 1, 
+                     ph1min = 1, ph1max = 1, 
+                     ph2min = 0.5, ph2max = 0.5, 
+                     pnh = 1, pneff = 1,
                      shuffle = FALSE,
                      type = "unif", 
                      hmin1 = 100, hmax1 = 101, 
                      hmin2 = 50, hmax2 = 51, 
                      nhmin = 1, nhmax = 2)
-  plot(rhubmat)
-  rhubmat = .rhubmat(p = 10, t = 8, 
+  pdf()
+  par(oma = c(0,0,0,2))
+  plot(rhubmat) 
+  dev.off()
+  rhubmat = .rhubmat(p = 10, T0 = 8, 
                      H1 = c(8), H2 = c(1,2), 
-                     ph1 = 1, ph2 = 0.5, pnh = 1, 
+                     ph1min = 1, ph1max = 1, 
+                     ph2min = 0.5, ph2max = 0.5,
+                     pnh = 0, pneff = 0, 
                      shuffle = FALSE,
                      type = "gaussian", 
-                     hsd1 = 100, hsd2 = 100, nhsd = 1) 
-  plot(abs(rhubmat))
+                     hsd1 = 100, hsd2 = 100, nhsd = 1, neffsd = 0.005) 
+  pdf()
+  par(oma = c(0,0,0,2))
+  plot(rhubmat) 
+  dev.off()
   
   
   
   ## Lets see what happens if r1 = 0
-  rhubmat = .rhubmat(p = 20, t = 10, 
-                     H1 = NULL, H2 = c(1,2), 
-                     ph1 = 1, ph2 = 0.5, pnh = 1, 
-                     shuffle = FALSE,
-                     type = "unif", 
-                     hmin1 = 100, hmax1 = 101, 
-                     hmin2 = 50, hmax2 = 51, 
-                     nhmin = 1, nhmax = 2)
-  par(mar = c(4,4,4,4))
-  plot(rhubmat)
+  #rhubmat = .rhubmat(p = 20, t = 10, 
+  #                   H1 = NULL, H2 = c(1,2), 
+  #                   ph1 = 1, ph2 = 0.5, pnh = 1, 
+  #                   shuffle = FALSE,
+  #                   type = "unif", 
+  #                   hmin1 = 100, hmax1 = 101, 
+  #                   hmin2 = 50, hmax2 = 51, 
+  #                   nhmin = 1, nhmax = 2)
+  #par(mar = c(4,4,4,4))
+  #plot(rhubmat)
 
   ## Lets see what happens if r2 = 0
-  rhubmat = .rhubmat(p = 20, t = 10, 
-                     H1 = c(4,5), H2 = NULL, 
-                     ph1 = 1, ph2 = 0.5, pnh = 1, 
-                     shuffle = FALSE,
-                     type = "unif", 
-                     hmin1 = 100, hmax1 = 101, 
-                     hmin2 = 50, hmax2 = 51, 
-                     nhmin = 1, nhmax = 2)
-  par(mar = c(4,4,4,4))
-  plot(rhubmat)
+  #rhubmat = .rhubmat(p = 20, t = 10, 
+  #                   H1 = c(4,5), H2 = NULL, 
+  #                   ph1 = 1, ph2 = 0.5, pnh = 1, 
+  #                   shuffle = FALSE,
+  #                   type = "unif", 
+  #                   hmin1 = 100, hmax1 = 101, 
+  #                   hmin2 = 50, hmax2 = 51, 
+  #                   nhmin = 1, nhmax = 2)
+  #par(mar = c(4,4,4,4))
+  #plot(rhubmat)
   
   rm(adjmat, rhubmat, examples)
   
@@ -476,7 +519,10 @@ if(examples){
 ##                given parameters.     
 ##
 r.sparse.pdhubmat <- function(
-  p, T0, H1, H2, ph1, ph2, pnh, pneff,
+  p, T0, H1, H2, 
+  ph1min, ph1max, 
+  ph2min, ph2max, 
+  pnh, pneff,
   diagonal_shift = 1, shuffle = FALSE, type = c("unif", "gaussian"),
   hmin1 = 0.5, hmax1 = 0.8,
   hmin2 = 0.5, hmax2 = 0.8,
@@ -485,13 +531,15 @@ r.sparse.pdhubmat <- function(
   hsd1 = 1, hsd2 = 1, nhsd = 1, neffsd = 0.5,
   verbose = FALSE){
   .pm = .rhubmat(
-    p, T0, H1, H2, ph1, ph2, pnh, pneff, 
+    p, T0, H1, H2, ph1min, ph1max, ph2min, ph2max, pnh, pneff, 
     shuffle = shuffle, type = type,
     hmin1 = hmin1, hmax1 = hmax1,
     hmin2 = hmin2, hmax2 = hmax2,
     nhmin = nhmin, nhmax = nhmax,
     neffmin = neffmin, neffmax = neffmax,
     hsd1 = hsd1, hsd2 = hsd2, nhsd = nhsd, neffsd = neffsd)
+
+  print(.pm)
 
   .lambda = eigen(.pm)$value[p]
   .I =  (-.lambda + diagonal_shift) * diag(p)
@@ -511,7 +559,8 @@ r.sparse.pdhubmat <- function(
 
 
 r.sparse.pdhubmat_list <- function(
-    p, T0, K, Hjoint, Hind_list, ph1, ph2, pnh, pneff,
+    p, T0, K, Hjoint, Hind_list, 
+    ph1min, ph1max, ph2min, ph2max, pnh, pneff,
     diagonal_shift = 1, shuffle = FALSE, type = c("unif", "gaussian"),
     hmin1 = 0.5, hmax1 = 0.8,
     hmin2 = 0.5, hmax2 = 0.8,
@@ -522,7 +571,8 @@ r.sparse.pdhubmat_list <- function(
   
   theta_list <- .rhubmat_list(
     p, T0, K, Hjoint, Hind_list, 
-    ph1, ph2, pnh, pneff, 
+    ph1min, ph1max, ph2min, ph2max, 
+    pnh, pneff, 
     shuffle, type,
     hmin1, hmax1,
     hmin2, hmax2,
@@ -554,16 +604,20 @@ r.sparse.pdhubmat_list <- function(
 ### Example:
 if(examples){
   Theta = r.sparse.pdhubmat(
-    p = 20, T0 = 10, H1 = c(1), H2 = c(5), 
-    ph1 = 1, ph2 = 0.5, pnh = 1, pneff = 0.1,
+    p = 20, T0 = 10, H1 = c(1,2,3), H2 = c(7,8,9), 
+    ph1min = 0.8, ph1max = 1, ph2min = 0.5, ph2max = 0.7,
+    pnh = 1, pneff = 0.1,
     diagonal_shift = 1,  shuffle = FALSE, type = "unif", 
-    hmin1 = 150, hmax1 = 100, 
+    hmin1 = 100, hmax1 = 150, 
     hmin2 = 50, hmax2 = 100, 
     nhmin = 25, nhmax = 50,
     neffmin = 0, neffmax = 25)
 
-  plot(abs(Theta - diag(diag(Theta))))
   
+  pdf()
+  par(oma = c(0,0,0,2))
+  plot(abs(Theta - diag(diag(Theta))))
+  dev.off()
   rm(Theta)
   
 }

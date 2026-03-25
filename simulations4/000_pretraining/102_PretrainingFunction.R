@@ -7,7 +7,8 @@ pretraining_fun <- function(args) {
   .pm <- r.sparse.pdhubmat(
       p = args$p, T0 = args$T0,
       H1 = args$Hjoint, H2 = args$Hind[[1]],
-      ph1 = args$ph1, ph2 = args$ph2, 
+      ph1min = args$ph1min, ph1max = args$ph1max,
+      ph2min = args$ph2min, ph2max = args$ph2max, 
       pnh = args$pnh, pneff = args$pneff,
       diagonal_shift = args$diagonal_shift,
       shuffle = args$shuffle,

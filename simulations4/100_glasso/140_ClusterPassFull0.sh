@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --job-name=GL1
+#SBATCH --job-name=GL0
 #SBATCH --mail-type=ALL
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
