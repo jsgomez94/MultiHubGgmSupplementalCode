@@ -11,8 +11,8 @@ FullSimulation <- function(args, index) {
   #####################################################
   
   method_names <- c(
-    "ST.OVER.CORR.IM", "ST.ORAC.CORR.IM", 
-    "ST.OVER.THR.IM", "ST.ORAC.THR.IM")
+    "ST.ORAC.CORR.IM", "ST.1OVER.CORR.IM", "ST.2OVER.CORR.IM", "ST.3OVER.CORR.IM",
+    "ST.ORAC.THR.IM", "ST.1OVER.THR.IM", "ST.2OVER.THR.IM", "ST.3OVER.THR.IM")
   n_methods <- length(method_names)
 
   ## Output of simulation:
@@ -53,20 +53,6 @@ FullSimulation <- function(args, index) {
         nhmin = args$nhmin, nhmax = args$nhmax,
         neffmin = args$neffmin, neffmax = args$neffmax,
         verbose = FALSE)
-      #.pmlist   <- lapply(
-      #  1:args$K, function(k) {
-      #    return(r.sparse.pdhubmat(
-      #      p = args$p, T0 = args$T0,
-      #      H1 = args$Hjoint, H2 = args$Hind[[k]],
-      #      ph1 = args$ph1, ph2min = args$ph2min, ph2max = args$ph2max,
-      #      pnh = args$pnh, pneff = args$pneff,
-      #      diagonal_shift = args$diagonal_shift,
-      #      shuffle = args$shuffle, type = args$type,
-      #      hmin1 = args$hmin1, hmax1 = args$hmax1,
-      #      hmin2 = args$hmin2, hmax2 = args$hmax2,
-      #      nhmin = args$nhmin, nhmax = args$nhmax,
-      #      neffmin = args$neffmin, neffmax = args$neffmax,
-      #      verbose = FALSE))} )
       .covlist  <- lapply(.pmlist, solve)
       .iclist   <- lapply(.covlist, .COVtoCOR)
 
@@ -90,7 +76,10 @@ FullSimulation <- function(args, index) {
       }
 
       .ns       <- rep(args$n, args$K)
-      .ndirOver = floor(sqrt(args$p))
+      .ndirOver = c(
+        floor(sqrt(args$p)/2),
+        floor(sqrt(args$p)),
+        floor(3 * sqrt(args$p)/2))
       .ndirOrac = length(args$Hjoint)
 
     }
@@ -104,33 +93,35 @@ FullSimulation <- function(args, index) {
     #####################################################
     #####################################################
     #####################################################
-    ## Step 3: STIEFEL OVERESTIMATION
+    ## Step 3: STIEFEL ORACLE
     {
-      print(paste0("Step ", sim_ind,".3: STIEFEL SAMPLE-COR OVEREST."))
+      print(paste0("Step ", sim_ind,".3: STIEFEL SAMPLE-COR ORACLE."))
       
       ##################
       ## Joint Estimation
       ##################
       .start.time = Sys.time()
 
-      .cor_StOver_obj = sgd.stiefel(
+      .cor_St_ORAC_obj = sgd.stiefel(
         sigmalist = .scorlist,   ## Find common eigenvectors.
-        p = args$p, ndir = .ndirOver, K = args$K,
+        p = args$p, ndir = .ndirOrac, K = args$K,
         type = "M", nstarts = 10,
         alpha = 0.1, max.iter = 500)
       
           
-      .cor_StOver_im <- apply(t(t(.cor_StOver_obj$vectors^2)), MARGIN = 1, sum)
-      .cor_StOver_evals <- .cor_StOver_obj$values
+      .cor_St_ORAC_im <- apply(t(t(.cor_St_ORAC_obj$vectors^2)), MARGIN = 1, sum)
       .end.time = Sys.time()
 
-      .cor_StOver_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
+      .cor_St_ORAC_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
 
     }
     #####################################################
     #####################################################
     ## Step 3: STIEFEL OVERESTIMATION
-    {
+    .cor_St_OVER_time <- numeric(3)
+    .cor_St_OVER_im <- matrix(0, ncol = args$p, nrow = 3)
+
+    for (ov_ind in 1:3) {
       print(paste0("Step ", sim_ind,".4: STIEFEL SAMPLE-COR ORACLE."))
         
       ##################
@@ -138,23 +129,29 @@ FullSimulation <- function(args, index) {
       ##################
       .start.time = Sys.time()
 
-      .cor_StOrac_obj = sgd.stiefel(
+      .cor_St_OVER_obj = sgd.stiefel(
         sigmalist = .scorlist,   ## Find common eigenvectors.
-        p = args$p, ndir = .ndirOrac, K = args$K,
+        p = args$p, ndir = .ndirOver[ov_ind], K = args$K,
         type = "M", nstarts = 10,
         alpha = 0.1, max.iter = 500)
       
           
-      .cor_StOrac_im <- apply(t(t(.cor_StOrac_obj$vectors^2)), MARGIN = 1, sum)
-      .cor_StOrac_evals <- .cor_StOrac_obj$values
+      .cor_St_OVER_im[ov_ind, ] <- apply(t(t(.cor_St_OVER_obj$vectors^2)), MARGIN = 1, sum)
       .end.time = Sys.time()
 
-      .cor_StOrac_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
+      .cor_St_OVER_time[ov_ind] <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
 
     }
     #####################################################
     #####################################################
-    ## Step 4: STIEFEL ORACLE
+    #####################################################
+    #####################################################
+    #####################################################
+    #####################################################
+    #####################################################
+    #####################################################
+    #####################################################
+    ## Step 4: STIEFEL THRESHOLDED ORACLE
     {
       print(paste0("Step ", sim_ind,".4: STIEFEL THRESHOLD-COR OVEREST"))
 
@@ -163,43 +160,45 @@ FullSimulation <- function(args, index) {
       ##################
       .start.time = Sys.time()
 
-      .thr_StOver_obj = sgd.stiefel(
-        sigmalist = .scorlist,   ## Find common eigenvectors.
-        p = args$p, ndir = .ndirOver, K = args$K,
-        type = "M", nstarts = 10,
-        alpha = 0.1, max.iter = 500)
-      
-          
-      .thr_StOver_im <- apply(t(t(.thr_StOver_obj$vectors^2)), MARGIN = 1, sum)
-
-      .end.time = Sys.time()
-
-      .thr_StOver_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
-
-    }
-    #####################################################
-    #####################################################
-    ## Step 4: STIEFEL ORACLE
-    {
-      print(paste0("Step ", sim_ind,".4: STIEFEL THRESHOLD-COR ORACLE"))
-
-      ##################
-      ## Joint Estimation
-      ##################
-      .start.time = Sys.time()
-
-      .thr_StOrac_obj = sgd.stiefel(
-        sigmalist = .scorlist,   ## Find common eigenvectors.
+      .thr_St_ORAC_obj = sgd.stiefel(
+        sigmalist = .thrcor_list,   ## Find common eigenvectors.
         p = args$p, ndir = .ndirOrac, K = args$K,
         type = "M", nstarts = 10,
         alpha = 0.1, max.iter = 500)
       
           
-      .thr_StOrac_im <- apply(t(t(.thr_StOrac_obj$vectors^2)), MARGIN = 1, sum)
+      .thr_St_ORAC_im <- apply(t(t(.thr_St_ORAC_obj$vectors^2)), MARGIN = 1, sum)
 
       .end.time = Sys.time()
 
-      .thr_StOrac_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
+      .thr_St_ORAC_time <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
+
+    }
+    #####################################################
+    #####################################################
+    ## Step 3: STIEFEL OVERESTIMATION
+    .thr_St_OVER_time <- numeric(3)
+    .thr_St_OVER_im <- matrix(0, ncol = args$p, nrow = 3)
+
+    for (ov_ind in 1:3) {
+      print(paste0("Step ", sim_ind,".4: STIEFEL SAMPLE-COR ORACLE."))
+        
+      ##################
+      ## Joint Estimation
+      ##################
+      .start.time = Sys.time()
+
+      .thr_St_OVER_obj = sgd.stiefel(
+        sigmalist = .scorlist,   ## Find common eigenvectors.
+        p = args$p, ndir = .ndirOver[ov_ind], K = args$K,
+        type = "M", nstarts = 10,
+        alpha = 0.1, max.iter = 500)
+      
+          
+      .thr_St_OVER_im[ov_ind, ] <- apply(t(t(.thr_St_OVER_obj$vectors^2)), MARGIN = 1, sum)
+      .end.time = Sys.time()
+
+      .thr_St_OVER_time[ov_ind] <- difftime(time1 = .end.time, time2 = .start.time, units = "secs")[[1]]
 
     }
     #####################################################
@@ -212,13 +211,18 @@ FullSimulation <- function(args, index) {
         SIM_NUM   = rep(sim_ind, n_methods),
         K_MAT_NUM = rep(0, n_methods),
         METHOD    = method_names,
-        TIME      = c(.cor_StOver_time, .cor_StOrac_time, 
-                      .thr_StOver_time, .thr_StOrac_time))
+        TIME      = c(
+          .cor_St_ORAC_time,
+          .cor_St_OVER_time,
+          .thr_St_ORAC_time,
+          .thr_St_OVER_time))
       
       ## Connectivity data:
       .data_deg_temp <- data.frame(rbind(
-        .cor_StOver_im, .cor_StOrac_im,
-        .thr_StOver_im, .thr_StOrac_im))
+        .cor_St_ORAC_im, 
+        .cor_St_OVER_im,
+        .thr_St_ORAC_im, 
+        .thr_St_OVER_im))
       colnames(.data_deg_temp) <- paste0("var", 1:args$p)
       
       ## Saving data:

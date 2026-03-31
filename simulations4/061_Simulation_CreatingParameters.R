@@ -98,7 +98,7 @@ CreateParameters <- function(id_task, runtype = c(1, 2, 3)) {
   args_list$T0      <- as.integer(args$p * args$T0_prop)
   
   args_list$Hjoint  <- 1:args$r1
-  args_list$Hind    <- lapply(1:args$K, function(k) {k * 10 + 1:args$r2})
+  args_list$Hind    <- lapply(1:args$K, function(k) {k * 25 + 1:args$r2})
   
   args_list$running_days <- 4
 

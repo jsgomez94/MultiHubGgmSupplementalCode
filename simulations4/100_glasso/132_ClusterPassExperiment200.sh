@@ -11,7 +11,7 @@
 pwd; hostname; date
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo This is task $(($SLURM_ARRAY_TASK_ID))
+echo This is task $SLURM_ARRAY_TASK_ID
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a
@@ -24,8 +24,8 @@ echo a
 echo a
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo 3 Running 100_glasso/123_SimulationScript.R with input $(($SLURM_ARRAY_TASK_ID)) 2
-Rscript 100_glasso/123_SimulationScript.R $(($SLURM_ARRAY_TASK_ID)) 2
+echo 3 Running 100_glasso/123_SimulationScript.R with input $SLURM_ARRAY_TASK_ID 2
+Rscript 100_glasso/123_SimulationScript.R $SLURM_ARRAY_TASK_ID 2
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a
