@@ -31,19 +31,19 @@ sim_par_table <- expand.grid(
   type          = "unif",
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
-  
-  r2              = c(3),
-  r1              = c(5),
+    
+  r2              = c(5),
+  r1              = c(5, 10, 15),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.3, 0.5),
-  ph1             = c(0.3, 0.4, 0.5),
+  ph2min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 2, 5),
-  diagonal_shift  = c(2,5),
-  n_prop          = c(0.5, 0.75, 1, 1.25),
-  T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 400))
+  nsim            = ifelse(runtype <= 2, 1, 5),
+  diagonal_shift  = c(2),
+  n_prop          = c(0.5, 0.75, 1),
+  T0_prop         = c(1),
+  p               = c(200, 400))
 attach(sim_par_table)
 
 
@@ -69,14 +69,14 @@ if (!dir.exists(subfolder_plots_new)) {
 ##################################################################
 method_names <- c(
     "GL.CORR.d",          ## GLASSO-methods
-    "HWGL.CORR.d",        ## HWGL-methdos.
+    #"HWGL.CORR.d",        ## HWGL-methdos.
     "COR_Scr_IPCHD", 
     "COR_Thr_IPCHD",
     "ST.OVER.CORR.IM",
     "ST.OVER.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
-    "HWGL",        ## HWGL-methdos.
+    #"HWGL",        ## HWGL-methdos.
     "IPC-HD: Screening",
     "IPC-HD: Threshold",
     "JIC-HD: Sample Cov",
@@ -85,8 +85,9 @@ method_names_clean <- c(
 
 outputs_merged_list <- list()
 
-for (p_val in c(100,200,300)) {
-  
+for (p_val in c(200,400)) {
+  T0_prop_val <- 1
+  diag_shift_val <- 2
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
@@ -114,7 +115,7 @@ for (p_val in c(100,200,300)) {
   output_merged_jic <- output_merged_jic %>% 
     relocate(microrun, .after = 1)
   dim(output_merged_jic)
-  head(output_merged_jic[,1:15], 15)
+  head(output_merged_jic[,1:15])
   colnames(output_merged_jic)
 
   ## For each row, we calculate the TPR/FPR:
@@ -173,7 +174,7 @@ for (p_val in c(100,200,300)) {
     output_merged_gl, MARGIN = 1, 
     function(x) {
       nhubs     <- 5
-      p_val     <- length(x) - 10
+      p_val     <- length(x) - 11
       id_task   <- x[1]
       args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
       trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)

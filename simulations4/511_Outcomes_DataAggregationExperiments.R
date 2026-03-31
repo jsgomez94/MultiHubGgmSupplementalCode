@@ -29,19 +29,19 @@ sim_par_table <- expand.grid(
   type          = "unif",
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
-  
-  r2              = c(3),
-  r1              = c(5),
+    
+  r2              = c(5),
+  r1              = c(5, 10, 15),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.3, 0.5),
-  ph1             = c(0.3, 0.4, 0.5),
+  ph2min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 2, 5),
-  diagonal_shift  = c(2,5),
-  n_prop          = c(0.5, 0.75, 1, 1.25),
-  T0_prop         = c(0.5, 0.75, 1),
-  p               = c(100, 200, 400))
+  nsim            = ifelse(runtype <= 2, 1, 5),
+  diagonal_shift  = c(2),
+  n_prop          = c(0.5, 0.75, 1),
+  T0_prop         = c(1),
+  p               = c(200, 400))
 attach(sim_par_table)
 
 
@@ -96,7 +96,7 @@ run_info <- list(
 
 ###########################
 ## LOOP OVER ALL 288 SIMULATION PARAMETER COMBINATIONS
-for (id_task in 1:144) {
+for (id_task in 1:72) {
   print(paste("XXXXXXXXXXXXXXXX ID-TASK", id_task))
 
   output <- NULL
@@ -125,8 +125,8 @@ for (id_task in 1:144) {
         mutate(
           p = args_temp$p, 
           T0 = args_temp$T0, n = args_temp$n,
-          ph1 = args_temp$ph1, ph2 = args_temp$ph2, 
-          .before = METHOD)
+          ph1 = args_temp$ph1min, ph2 = args_temp$ph2min, 
+          nhubs = args_temp$r1, .before = METHOD)
       
       ## Clean names:
       colnames(output_temp) <- gsub(" ", "", colnames(output_temp))

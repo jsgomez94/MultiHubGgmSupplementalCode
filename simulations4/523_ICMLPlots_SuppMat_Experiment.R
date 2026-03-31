@@ -32,18 +32,18 @@ sim_par_table <- expand.grid(
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
     
-  r2              = c(3),
-  r1              = c(5),
+  r2              = c(5),
+  r1              = c(5, 10, 15),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.3, 0.5),
-  ph1             = c(0.3, 0.4, 0.5),
+  ph2min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 2, 5),
-  diagonal_shift  = c(2,5),
-  n_prop          = c(0.5, 0.75, 1, 1.25),
+  nsim            = ifelse(runtype <= 2, 1, 5),
+  diagonal_shift  = c(2),
+  n_prop          = c(0.5, 0.75, 1),
   T0_prop         = c(1),
-  p               = c(100, 200, 400))
+  p               = c(200, 400))
 attach(sim_par_table)
 
 
@@ -72,8 +72,8 @@ method_names <- c(
     "HWGL.CORR.d",        ## HWGL-methdos.
     "COR_Scr_IPCHD", 
     "COR_Thr_IPCHD",
-    "ST.OVER.CORR.IM",
-    "ST.OVER.THR.IM")
+    "ST.2OVER.CORR.IM",
+    "ST.2OVER.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
     "HWGL",        ## HWGL-methdos.
@@ -86,8 +86,8 @@ method_names_clean <- c(
 outputs_merged_list <- list()
 sd_const <- 2
 
-for (diag_shift_val in c(2,5)) {
-  for (p_val in c(100,200,400)) {
+for (diag_shift_val in c(2)) {
+  for (p_val in c(200,400)) {
   
     ##############################
     ##############################
@@ -108,7 +108,7 @@ for (diag_shift_val in c(2,5)) {
 
     ## Merge dataset of JIC-HD-derived data.
     output_merged_jic  <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[-c(1:4)]) %>%
+      filter(METHOD %in% method_names[-c(1:3)]) %>%
       mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
       arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
       select(-K_MAT_NUM, -TIME)
@@ -123,14 +123,13 @@ for (diag_shift_val in c(2,5)) {
     mat_jic <- t(apply(
       output_merged_jic, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
-        p_val     <- length(x) - 9
+        p_val     <- length(x) - 10
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
         trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
         nhubs     <- length(args_temp$Hjoint)
 
-        vals      <- as.numeric(x[-(1:9)])
+        vals      <- as.numeric(x[-(1:10)])
         vals_pos  <- vals
 
         tr_mean   <- mean(vals_pos)
@@ -173,7 +172,7 @@ for (diag_shift_val in c(2,5)) {
     # TPR of GLASSO-methods.
 
     output_merged_gl   <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[c(1:4)]) %>%
+      filter(METHOD %in% method_names[c(1:3)]) %>%
       filter(K_MAT_NUM != 0) %>%
       mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
       arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
@@ -188,14 +187,13 @@ for (diag_shift_val in c(2,5)) {
     hubsdata_gl <- t(apply(
       output_merged_gl, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
-        p_val     <- length(x) - 10
+        p_val     <- length(x) - 11
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
         trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
         nhubs     <- length(args_temp$Hjoint)
       
-        vals      <- as.numeric(x[-c(1:10)])
+        vals      <- as.numeric(x[-c(1:11)])
         vals_pos  <- vals        
       
         tr_mean   <- mean(vals_pos)
@@ -221,7 +219,6 @@ for (diag_shift_val in c(2,5)) {
     mat_gl <- t(apply(
       output_merged_gl, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
         p_val     <- length(x) - 9
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
@@ -243,21 +240,25 @@ for (diag_shift_val in c(2,5)) {
           0, 
           2 * prec * rcll / (prec + rcll) )
 
-        return(c(tp, fp, fn, prec, rcll, fscr))
+        return(c(nhubs, tp, fp, fn, prec, rcll, fscr))
       }
     ))
-    output_merged_gl$tp <- mat_gl[,1]
-    output_merged_gl$fp <- mat_gl[,2]
-    output_merged_gl$fn <- mat_gl[,3]
-    output_merged_gl$prec <- mat_gl[,4]
-    output_merged_gl$rcll <- mat_gl[,5]
-    output_merged_gl$fscr <- mat_gl[,6]
+    output_merged_gl <- output_merged_gl %>% mutate(nhubs = mat_gl[,1], .after = ph2)
+    output_merged_gl$tp <- mat_gl[,2]
+    output_merged_gl$fp <- mat_gl[,3]
+    output_merged_gl$fn <- mat_gl[,4]
+    output_merged_gl$prec <- mat_gl[,5]
+    output_merged_gl$rcll <- mat_gl[,6]
+    output_merged_gl$fscr <- mat_gl[,7]
     output_merged_gl <- output_merged_gl %>%
       dplyr::select(!starts_with("ishub"))
   
     dim(output_merged_gl)
-    head(output_merged_gl, 15)
+    dim(output_merged_jic)
+    colnames(output_merged_gl)
+    colnames(output_merged_jic)
 
+  
 
 
     ##############################
@@ -303,7 +304,7 @@ output_summarised <- output_merged %>%
     
 T0_prop_val <- 1
 
-for (diag_shift_val in c(2,5)) {
+for (diag_shift_val in c(2)) {
   gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
   file_name <- paste0(
