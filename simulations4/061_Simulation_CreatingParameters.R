@@ -73,13 +73,13 @@ CreateParameters <- function(id_task, runtype = c(1, 2, 3)) {
     pneff           = c(0.01),
     pnh             = c(0.05),
     ph2min          = c(0.3, 0.5),
-    ph1min          = c(0.3, 0.5),
+    ph1min          = c(0.3, 0.4, 0.5),
     
-    nsim            = ifelse(runtype <= 2, 1, 5),
+    nsim            = ifelse(runtype <= 2, 2, 10),
     diagonal_shift  = c(2),
-    n_prop          = c(0.5, 0.75, 1),
+    n_prop          = c(0.5, 0.75, 1, 1.25),
     T0_prop         = c(1),
-    p               = c(200, 400))
+    p               = c(100, 200, 400))
 
     sim_par_table$ph1max <- sim_par_table$ph1min + 0.3
     sim_par_table$ph2max <- sim_par_table$ph2min + 0.3

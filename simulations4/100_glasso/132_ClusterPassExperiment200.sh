@@ -6,7 +6,7 @@
 #SBATCH --mem-per-cpu=1gb
 #SBATCH --time=02:00:00
 #SBATCH --output=100_glasso/experiments1/logs/output%a.out
-#SBATCH --array=10-369
+#SBATCH --array=730-1449
 
 pwd; hostname; date
 

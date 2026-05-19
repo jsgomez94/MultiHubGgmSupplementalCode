@@ -6,12 +6,12 @@
 #SBATCH --mem-per-cpu=1gb
 #SBATCH --time=1-00:00:00
 #SBATCH --output=100_glasso/experiments1/logs/output%a.out
-#SBATCH --array=370-729
+#SBATCH --array=1450-2169
 
 pwd; hostname; date
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo This is task $(($SLURM_ARRAY_TASK_ID + 360))
+echo This is task $SLURM_ARRAY_TASK_ID
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a

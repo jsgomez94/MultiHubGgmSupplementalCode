@@ -1,12 +1,12 @@
 #!/bin/sh
-#SBATCH --job-name=HW5
+#SBATCH --job-name=ST2
 #SBATCH --mail-type=ALL
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=1gb
-#SBATCH --time=3-00:00:00
-#SBATCH --output=200_hwgl/outputs1/logs/output%a.out
-#SBATCH --array=1450-2169
+#SBATCH --time=10:00:00
+#SBATCH --output=400_jichd/outputs1/logs/output%a.out
+#SBATCH --array=10-729
 
 pwd; hostname; date
 
@@ -24,8 +24,8 @@ echo a
 echo a
 
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-echo 3 Running 200_hwgl/123_SimulationScript.R with input $SLURM_ARRAY_TASK_ID 3
-Rscript 200_hwgl/123_SimulationScript.R $SLURM_ARRAY_TASK_ID 3
+echo 3 Running 400_jichd/123_SimulationScript.R with input $SLURM_ARRAY_TASK_ID 3
+Rscript 400_jichd/123_SimulationScript.R $SLURM_ARRAY_TASK_ID 3
 echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 echo a
 echo a
