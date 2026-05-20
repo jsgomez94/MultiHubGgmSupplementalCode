@@ -19,7 +19,7 @@ T0_prop_val    <- as.numeric(input[2])
 
 
 ###################### Parameter table:
-runtype       <- 3 # FOR FULL
+runtype       <- 2 # FOR EXPERIMENTS
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,
@@ -32,15 +32,15 @@ sim_par_table <- expand.grid(
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
     
-  r2              = c(3),
-  r1              = c(5),
+  r2              = c(5),
+  r1              = c(5, 10, 15),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.3, 0.5),
-  ph1             = c(0.3, 0.4, 0.5),
+  ph2min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 2, 5),
-  diagonal_shift  = c(2,5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
+  diagonal_shift  = c(2),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
   p               = c(100, 200, 400))
@@ -50,7 +50,7 @@ attach(sim_par_table)
 ###################### Creating folders:
 subfolder_new        <- paste0("600_AggregatedDataFull/")
 subfolder_data_new   <- paste0(subfolder_new, "data_all/")
-subfolder_plots_new  <- paste0(subfolder_new, "plots_all/")
+subfolder_plots_new  <- paste0(subfolder_new, "suppmat_all/")
 
 if (!dir.exists(subfolder_new)) {
        dir.create(subfolder_new)
@@ -72,8 +72,8 @@ method_names <- c(
     "HWGL.CORR.d",        ## HWGL-methdos.
     "COR_Scr_IPCHD", 
     "COR_Thr_IPCHD",
-    "ST.OVER.CORR.IM",
-    "ST.OVER.THR.IM")
+    "ST.2OVER.CORR.IM",
+    "ST.2OVER.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
     "HWGL",        ## HWGL-methdos.
@@ -86,8 +86,8 @@ method_names_clean <- c(
 outputs_merged_list <- list()
 sd_const <- 2
 
-for (diag_shift_val in c(2,5)) {
-  for (p_val in c(100,200,400)) {
+for (diag_shift_val in c(2)) {
+  for (p_val in c(100, 200, 400)) {
   
     ##############################
     ##############################
@@ -108,7 +108,7 @@ for (diag_shift_val in c(2,5)) {
 
     ## Merge dataset of JIC-HD-derived data.
     output_merged_jic  <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[-c(1:4)]) %>%
+      filter(METHOD %in% method_names[-c(1:3)]) %>%
       mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
       arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
       select(-K_MAT_NUM, -TIME)
@@ -123,14 +123,13 @@ for (diag_shift_val in c(2,5)) {
     mat_jic <- t(apply(
       output_merged_jic, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
-        p_val     <- length(x) - 9
+        p_val     <- length(x) - 10
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
         trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
         nhubs     <- length(args_temp$Hjoint)
 
-        vals      <- as.numeric(x[-(1:9)])
+        vals      <- as.numeric(x[-(1:10)])
         vals_pos  <- vals
 
         tr_mean   <- mean(vals_pos)
@@ -173,7 +172,7 @@ for (diag_shift_val in c(2,5)) {
     # TPR of GLASSO-methods.
 
     output_merged_gl   <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[c(1:4)]) %>%
+      filter(METHOD %in% method_names[c(1:3)]) %>%
       filter(K_MAT_NUM != 0) %>%
       mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
       arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
@@ -188,14 +187,13 @@ for (diag_shift_val in c(2,5)) {
     hubsdata_gl <- t(apply(
       output_merged_gl, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
-        p_val     <- length(x) - 10
+        p_val     <- length(x) - 11
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
         trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
         nhubs     <- length(args_temp$Hjoint)
       
-        vals      <- as.numeric(x[-c(1:10)])
+        vals      <- as.numeric(x[-c(1:11)])
         vals_pos  <- vals        
       
         tr_mean   <- mean(vals_pos)
@@ -221,7 +219,6 @@ for (diag_shift_val in c(2,5)) {
     mat_gl <- t(apply(
       output_merged_gl, MARGIN = 1, 
       function(x) {
-        nhubs     <- 5
         p_val     <- length(x) - 9
         id_task   <- x[1]
         args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
@@ -243,21 +240,25 @@ for (diag_shift_val in c(2,5)) {
           0, 
           2 * prec * rcll / (prec + rcll) )
 
-        return(c(tp, fp, fn, prec, rcll, fscr))
+        return(c(nhubs, tp, fp, fn, prec, rcll, fscr))
       }
     ))
-    output_merged_gl$tp <- mat_gl[,1]
-    output_merged_gl$fp <- mat_gl[,2]
-    output_merged_gl$fn <- mat_gl[,3]
-    output_merged_gl$prec <- mat_gl[,4]
-    output_merged_gl$rcll <- mat_gl[,5]
-    output_merged_gl$fscr <- mat_gl[,6]
+    output_merged_gl <- output_merged_gl %>% mutate(nhubs = mat_gl[,1], .after = ph2)
+    output_merged_gl$tp <- mat_gl[,2]
+    output_merged_gl$fp <- mat_gl[,3]
+    output_merged_gl$fn <- mat_gl[,4]
+    output_merged_gl$prec <- mat_gl[,5]
+    output_merged_gl$rcll <- mat_gl[,6]
+    output_merged_gl$fscr <- mat_gl[,7]
     output_merged_gl <- output_merged_gl %>%
       dplyr::select(!starts_with("ishub"))
   
     dim(output_merged_gl)
-    head(output_merged_gl, 15)
+    dim(output_merged_jic)
+    colnames(output_merged_gl)
+    colnames(output_merged_jic)
 
+  
 
 
     ##############################
@@ -278,7 +279,7 @@ for (diag_shift_val in c(2,5)) {
 
 output_merged <- do.call("rbind", outputs_merged_list)
 dim(output_merged)
-
+print(colnames(output_merged))
 
 
 ##################################################################
@@ -298,31 +299,37 @@ output_summarised <- output_merged %>%
     names_to      = "eval_par",
     values_to     = "eval") %>%
       
-  group_by(METHOD, p, ph1 , ph2, T0, n, eval_par) %>%
+  group_by(METHOD, p, ph1 , ph2, nhubs, T0, n, eval_par) %>%
   summarise(mean = mean(eval), sd = sd(eval))
     
+
+print(head(output_summarised))
+print(table(output_summarised$nhubs))
 T0_prop_val <- 1
 
-for (diag_shift_val in c(2,5)) {
+diag_shift_val <- 2
+for (nhubs_val in c(5, 10, 15)) {
   gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "623_ICML_TPR",
+    "523_ICML_TPR",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -347,21 +354,23 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "623_ICML_FPR",
+    "523_ICML_FPR",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -376,8 +385,10 @@ for (diag_shift_val in c(2,5)) {
       scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
-      geom_hline(yintercept = c(0), linetype = 2) +
-      geom_hline(yintercept = c(0.2), linetype = 0) +
+      geom_hline(yintercept = c(0), linetype = c(2)) +
+      geom_hline(yintercept = c(0.2), linetype = c(0)) +
+      #geom_hline(yintercept = c(0), linetype = 2) +
+      #facet_grid(rows = vars(ph2), cols = vars())
       facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -386,21 +397,23 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "623_ICML_prec",
+    "523_ICML_prec",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -426,21 +439,23 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "623_ICML_rcll",
+    "523_ICML_rcll",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -466,21 +481,23 @@ for (diag_shift_val in c(2,5)) {
 
   file_name <- paste0(
     subfolder_plots_new, 
-    "623_ICML_fscr",
+    "523_ICML_fscr",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
-  pdf(file_name, width = 8, height = 6)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),

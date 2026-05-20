@@ -50,7 +50,7 @@ attach(sim_par_table)
 ###################### Creating folders:
 subfolder_new        <- paste0("600_AggregatedDataFull/")
 subfolder_data_new   <- paste0(subfolder_new, "data_all/")
-subfolder_plots_new  <- paste0(subfolder_new, "plots_all/")
+subfolder_plots_new  <- paste0(subfolder_new, "sensitivity_all/")
 
 if (!dir.exists(subfolder_new)) {
        dir.create(subfolder_new)
@@ -68,19 +68,11 @@ if (!dir.exists(subfolder_plots_new)) {
 ##################################################################
 ##################################################################
 method_names <- c(
-    "GL.CORR.d",          ## GLASSO-methods
-    "HWGL.CORR.d",        ## HWGL-methdos.
-    "COR_Scr_IPCHD", 
-    "COR_Thr_IPCHD",
-    "ST.2OVER.CORR.IM",
-    "ST.2OVER.THR.IM")
+    "ST.ORAC.CORR.IM", 
+    "ST.1OVER.CORR.IM", "ST.2OVER.CORR.IM", "ST.3OVER.CORR.IM")
 method_names_clean <- c(
-    "GLASSO",          ## GLASSO-methods
-    "HWGL",        ## HWGL-methdos.
-    "IPC-HD: Screening",
-    "IPC-HD: Thresholding",
-    "JIC-HD: Sample Cov",
-    "JIC-HD: Thresholding")
+    "JIC-HD: Oracle",
+    "JIC-HD: Overest 1", "JIC-HD: Overest 2", "JIC-HD: Overest 3")
 
 
 outputs_merged_list <- list()
@@ -108,8 +100,7 @@ for (diag_shift_val in c(2)) {
 
     ## Merge dataset of JIC-HD-derived data.
     output_merged_jic  <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[-c(1:4)]) %>%
-      mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
+      filter(METHOD %in% method_names) %>%
       arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
       select(-K_MAT_NUM, -TIME)
     output_merged_jic$microrun <- rep(1:10, nrow(output_merged_jic) / 10) 
@@ -167,117 +158,27 @@ for (diag_shift_val in c(2)) {
     head(output_merged_jic)
 
   
-    ##############################
-    ##############################
-    # TPR of GLASSO-methods.
-
-    output_merged_gl   <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-      filter(METHOD %in% method_names[c(1:4)]) %>%
-      filter(K_MAT_NUM != 0) %>%
-      mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
-      arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
-      select(-TIME)
-    output_merged_gl$microrun <- rep(1:10, nrow(output_merged_gl) / 10) ## adding micro-run identifier...
-    output_merged_gl <- output_merged_gl %>% 
-      relocate(microrun, .after = 1)
-    dim(output_merged_gl)
-    head(output_merged_gl[, 1:15], 10)
-
-    ## Calculate hubs for each of the simulations ran
-    hubsdata_gl <- t(apply(
-      output_merged_gl, MARGIN = 1, 
-      function(x) {
-        p_val     <- length(x) - 11
-        id_task   <- x[1]
-        args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
-        trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
-        nhubs     <- length(args_temp$Hjoint)
-      
-        vals      <- as.numeric(x[-c(1:11)])
-        vals_pos  <- vals        
-      
-        tr_mean   <- mean(vals_pos)
-        tr_sd     <- sd(vals_pos)
-
-        hubshat   <- (vals > tr_mean + sd_const * tr_sd) # 2.32 * tr_sd
-        return(hubshat)
-
-      }
-    ))
-    
-    ## Aggregate hubs of K_MAT_NUM = 1,2,3 to obtain common hub estimation rate.
-    colnames(hubsdata_gl) <- paste0("ishub", 1:p_val)
-    output_merged_gl <- cbind(output_merged_gl, hubsdata_gl) %>%
-     dplyr::select(!starts_with("var")) %>%
-      group_by(TASK_ID, microrun, SIM_NUM, p, T0, n, ph1, ph2, nhubs, METHOD) %>%
-      summarise_at(vars(starts_with("ishub")),
-        function(x) {1 * (sum(x) == 3)}) %>%
-      ungroup()
-    dim(output_merged_gl)
-    head(output_merged_gl[, 1:15], 15)
-
-    mat_gl <- t(apply(
-      output_merged_gl, MARGIN = 1, 
-      function(x) {
-        p_val     <- length(x) - 10
-        id_task   <- x[1]
-        args_temp <- get(gsub(" ", "", paste0("args", id_task, sep = "")))
-        trueHubs  <- (1:p_val) %in% c(args_temp$Hjoint)
-        nhubs     <- length(args_temp$Hjoint)
-
-        hubshat   <- as.numeric(x[-(1:10)])
-
-        tp <- sum(hubshat & trueHubs) / (nhubs)
-        fp <- sum(hubshat & !trueHubs) / (p_val - nhubs)
-        fn <- sum(!hubshat & trueHubs) / (nhubs)
-        prec <- ifelse(
-          sum(hubshat) == 0,
-          0,
-          sum(hubshat & trueHubs) / (sum(hubshat)))
-        rcll <- sum(hubshat & trueHubs) / (nhubs)
-        fscr <- ifelse(
-          (prec == 0) || (rcll == 0) ,
-          0, 
-          2 * prec * rcll / (prec + rcll) )
-
-        return(c(tp, fp, fn, prec, rcll, fscr))
-      }
-    ))
-    output_merged_gl$tp <- mat_gl[,1]
-    output_merged_gl$fp <- mat_gl[,2]
-    output_merged_gl$fn <- mat_gl[,3]
-    output_merged_gl$prec <- mat_gl[,4]
-    output_merged_gl$rcll <- mat_gl[,5]
-    output_merged_gl$fscr <- mat_gl[,6]
-    output_merged_gl <- output_merged_gl %>%
-      dplyr::select(!starts_with("ishub"))
-  
-    dim(output_merged_gl)
-    head(output_merged_gl, 15)
-
-    dim(output_merged_gl)
-    dim(output_merged_jic)
     
     ##############################
     ##############################
     ## MERGING OUTPUTS:
 
-    output_merged_p <- rbind(output_merged_gl, output_merged_jic)   
+    output_merged_p <- output_merged_jic
     outputs_merged_list[[length(outputs_merged_list) + 1]] <- output_merged_p
 
 
     rm(list = grep('^output\\d+', ls(), value = TRUE))
     rm(list = grep("args", ls(), value = TRUE))
     rm(
-      output_merged_gl, output_merged_jic, output_merged_p,
-      sim_ind_load, mat_gl, mat_jic, hubsdata_gl)
+      output_merged_jic, output_merged_p,
+      sim_ind_load, mat_jic)
   }
 }
 
 output_merged <- do.call("rbind", outputs_merged_list)
 dim(output_merged)
 
-colnames(output_merged)
+
 
 ##################################################################
 ##################################################################
@@ -300,53 +201,62 @@ output_summarised <- output_merged %>%
   summarise(mean = mean(eval), sd = sd(eval))
     
 T0_prop_val <- 1
+labs <- parse(text = c(
+  "'JIC-HD:'~~hat(s)==s",
+  "'JIC-HD:'~~hat(s)==frac(p,2)",
+  "'JIC-HD:'~~hat(s)==p",
+  "'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)"))
+
 
 for (diag_shift_val in c(2)) {
-for (ph1_val in c(0.3, 0.4, 0.5)) {
+for (ph2_val in c(0.3, 0.5)) {
   gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_TPR",
+    "524_Sens_TPR",
     "_d", diag_shift_val,
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
-      ph1 == ph1_val,
-      nhubs == 5,
-      p %in% c(100, 200, 400),
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      ph2 == ph2_val,
+      p %in% c(200, 400)
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
       ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD     = factor(METHOD),
       TPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
 
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -356,45 +266,48 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_FPR",
+    "524_Sens_FPR",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
-      ph1 == ph1_val,
-      nhubs == 5,
-      p %in% c(100, 200, 400),
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      ph2 == ph2_val,
+      p %in% c(200, 400)
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
+      ph1_name     = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       FPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
-
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -405,23 +318,17 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_prec",
+    "524_Sens_prec",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
-      ph1 == ph1_val,
-      nhubs == 5,
-      p %in% c(100, 200, 400),
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      ph2 == ph2_val,
+      p %in% c(200, 400)
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -430,19 +337,29 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Precision = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -452,23 +369,17 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_rcll",
+    "524_Sens_rcll",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
-      ph1 == ph1_val,
-      nhubs == 5,
-      p %in% c(100, 200, 400),
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      ph2 == ph2_val,
+      p %in% c(200, 400)
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -477,19 +388,29 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Recall = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -499,23 +420,17 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_fscr",
+    "524_Sens_fscr",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
-      ph1 == ph1_val,
-      nhubs == 5,
-      p %in% c(100, 200, 400),
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      ph2 == ph2_val,
+      p %in% c(200, 400)
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -524,20 +439,30 @@ for (ph1_val in c(0.3, 0.4, 0.5)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Fscore = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       ylab("F-score") + 
-      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 
@@ -573,29 +498,23 @@ head(output_summarised)
 T0_prop_val <- 1
 
 for (diag_shift_val in c(2)) {
-for (p_val in c(200, 400)) {
+for (p_val in c(100, 200, 400)) {
   gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_TPR",
+    "524_Sens_TPR",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
-      p == p_val,
-      nhubs == 5,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      p == p_val
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -604,17 +523,27 @@ for (p_val in c(200, 400)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       TPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -625,22 +554,16 @@ for (p_val in c(200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_FPR",
+    "524_Sens_FPR",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
-      p == p_val,
-      nhubs == 5,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      p == p_val
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -649,18 +572,28 @@ for (p_val in c(200, 400)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       FPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -672,22 +605,16 @@ for (p_val in c(200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_prec",
+    "524_Sens_prec",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
-      p == p_val,
-      nhubs == 5,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      p == p_val
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -696,18 +623,28 @@ for (p_val in c(200, 400)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Precision = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -718,22 +655,16 @@ for (p_val in c(200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_rcll",
+    "524_Sens_rcll",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
-      p == p_val,
-      nhubs == 5,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      p == p_val
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -742,18 +673,28 @@ for (p_val in c(200, 400)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Recall = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -764,22 +705,16 @@ for (p_val in c(200, 400)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "522_ICML_fscr",
+    "524_Sens_fscr",
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
-      p == p_val,
-      nhubs == 5,
-      METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      p == p_val
       ) %>%
-    mutate(
-      METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
-      METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
@@ -788,18 +723,28 @@ for (p_val in c(200, 400)) {
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Fscore = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
-      scale_linetype_manual(values = c(2, 3, 4, 1)) +
-      scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
+      #scale_linetype_manual(values = c(2, 3, 4, 1)) +
+      #scale_discrete_manual("linewidth", values = c(0.75, 0.75, 0.75, 1)) +
       geom_point(aes(col = METHOD, shape = METHOD), size = 2.2, alpha = 1) +
-      scale_shape_manual(values = c(2, 5, 13, 19)) +
-      scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
-      scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_shape_manual(values = c(2, 5, 13, 19)) +
+      #scale_color_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
+      #scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       ylab("F-score") + 
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 

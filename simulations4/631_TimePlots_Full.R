@@ -85,7 +85,7 @@ method_names_clean <- c(
 
 output_merged <- NULL
 
-for(diag_shift_val in c(2,5)) {
+for(diag_shift_val in c(2)) {
 for (p_val in c(100, 200, 400)) {
   ##############################
   ##############################
