@@ -37,13 +37,13 @@ sim_par_table <- expand.grid(
   pneff           = c(0.01),
   pnh             = c(0.05),
   ph2min          = c(0.3, 0.5),
-  ph1min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 1, 5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
   diagonal_shift  = c(2),
-  n_prop          = c(0.5, 0.75, 1),
+  n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
-  p               = c(200, 400))
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
@@ -87,7 +87,7 @@ outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2)) {
-  for (p_val in c(200,400)) {
+  for (p_val in c(100, 200, 400)) {
   
     ##############################
     ##############################
@@ -277,7 +277,7 @@ for (diag_shift_val in c(2)) {
 output_merged <- do.call("rbind", outputs_merged_list)
 dim(output_merged)
 
-
+colnames(output_merged)
 
 ##################################################################
 ##################################################################
@@ -302,14 +302,14 @@ output_summarised <- output_merged %>%
 T0_prop_val <- 1
 
 for (diag_shift_val in c(2)) {
-for (ph1_val in c(0.3, 0.5)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+for (ph1_val in c(0.3, 0.4, 0.5)) {
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_TPR",
+    "522_ICML_TPR",
     "_d", diag_shift_val,
     "_ph", ph1_val,
     ".pdf")
@@ -318,7 +318,8 @@ for (ph1_val in c(0.3, 0.5)) {
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(200, 400),
+      nhubs == 5,
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -328,7 +329,7 @@ for (ph1_val in c(0.3, 0.5)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -345,7 +346,7 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -355,7 +356,7 @@ for (ph1_val in c(0.3, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_FPR",
+    "522_ICML_FPR",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
@@ -364,7 +365,8 @@ for (ph1_val in c(0.3, 0.5)) {
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(200, 400),
+      nhubs == 5,
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -374,7 +376,7 @@ for (ph1_val in c(0.3, 0.5)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -392,7 +394,7 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -403,7 +405,7 @@ for (ph1_val in c(0.3, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_prec",
+    "522_ICML_prec",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
@@ -412,7 +414,8 @@ for (ph1_val in c(0.3, 0.5)) {
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(200, 400),
+      nhubs == 5,
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -422,7 +425,7 @@ for (ph1_val in c(0.3, 0.5)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -439,7 +442,7 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -449,7 +452,7 @@ for (ph1_val in c(0.3, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_rcll",
+    "522_ICML_rcll",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
@@ -458,7 +461,8 @@ for (ph1_val in c(0.3, 0.5)) {
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(200, 400),
+      nhubs == 5,
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -468,7 +472,7 @@ for (ph1_val in c(0.3, 0.5)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -485,7 +489,7 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -495,7 +499,7 @@ for (ph1_val in c(0.3, 0.5)) {
   ## Plot 1: ph = 0.4
   file_name <- paste0(
     subfolder_plots_new, 
-    "521_ICML_fscr",
+    "522_ICML_fscr",
     "_d", diag_shift_val, 
     "_ph", ph1_val,
     ".pdf")
@@ -504,7 +508,8 @@ for (ph1_val in c(0.3, 0.5)) {
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       ph1 == ph1_val,
-      p %in% c(200, 400),
+      nhubs == 5,
+      p %in% c(100, 200, 400),
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -514,7 +519,7 @@ for (ph1_val in c(0.3, 0.5)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -532,7 +537,7 @@ for (ph1_val in c(0.3, 0.5)) {
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
       ylab("F-score") + 
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 
@@ -569,7 +574,7 @@ T0_prop_val <- 1
 
 for (diag_shift_val in c(2)) {
 for (p_val in c(200, 400)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
@@ -584,6 +589,7 @@ for (p_val in c(200, 400)) {
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       p == p_val,
+      nhubs == 5,
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -593,7 +599,7 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -628,6 +634,7 @@ for (p_val in c(200, 400)) {
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       p == p_val,
+      nhubs == 5,
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -637,7 +644,7 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -674,6 +681,7 @@ for (p_val in c(200, 400)) {
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       p == p_val,
+      nhubs == 5,
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -683,7 +691,7 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -719,6 +727,7 @@ for (p_val in c(200, 400)) {
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       p == p_val,
+      nhubs == 5,
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -728,7 +737,7 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
@@ -764,6 +773,7 @@ for (p_val in c(200, 400)) {
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       p == p_val,
+      nhubs == 5,
       METHOD != "IPC-HD: Thresholding",
       METHOD != "JIC-HD: Thresholding"
       ) %>%
@@ -773,7 +783,7 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),

@@ -37,20 +37,20 @@ sim_par_table <- expand.grid(
   pneff           = c(0.01),
   pnh             = c(0.05),
   ph2min          = c(0.3, 0.5),
-  ph1min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 1, 5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
   diagonal_shift  = c(2),
-  n_prop          = c(0.5, 0.75, 1),
+  n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
-  p               = c(200, 400))
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
 ###################### Creating folders:
 subfolder_new        <- paste0("500_AggregatedDataExperiments/")
 subfolder_data_new   <- paste0(subfolder_new, "data_all/")
-subfolder_plots_new  <- paste0(subfolder_new, "plots_all/")
+subfolder_plots_new  <- paste0(subfolder_new, "suppmat_all/")
 
 if (!dir.exists(subfolder_new)) {
        dir.create(subfolder_new)
@@ -87,7 +87,7 @@ outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2)) {
-  for (p_val in c(200,400)) {
+  for (p_val in c(100, 200, 400)) {
   
     ##############################
     ##############################
@@ -279,7 +279,7 @@ for (diag_shift_val in c(2)) {
 
 output_merged <- do.call("rbind", outputs_merged_list)
 dim(output_merged)
-
+print(colnames(output_merged))
 
 
 ##################################################################
@@ -299,31 +299,37 @@ output_summarised <- output_merged %>%
     names_to      = "eval_par",
     values_to     = "eval") %>%
       
-  group_by(METHOD, p, ph1 , ph2, T0, n, eval_par) %>%
+  group_by(METHOD, p, ph1 , ph2, nhubs, T0, n, eval_par) %>%
   summarise(mean = mean(eval), sd = sd(eval))
     
+
+print(head(output_summarised))
+print(table(output_summarised$nhubs))
 T0_prop_val <- 1
 
-for (diag_shift_val in c(2)) {
+diag_shift_val <- 2
+for (nhubs_val in c(5, 10, 15)) {
   gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
   file_name <- paste0(
     subfolder_plots_new, 
     "523_ICML_TPR",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
   pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -350,19 +356,21 @@ for (diag_shift_val in c(2)) {
     subfolder_plots_new, 
     "523_ICML_FPR",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
   pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -391,19 +399,21 @@ for (diag_shift_val in c(2)) {
     subfolder_plots_new, 
     "523_ICML_prec",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
   pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -431,19 +441,21 @@ for (diag_shift_val in c(2)) {
     subfolder_plots_new, 
     "523_ICML_rcll",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
   pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),
@@ -471,19 +483,21 @@ for (diag_shift_val in c(2)) {
     subfolder_plots_new, 
     "523_ICML_fscr",
     "_d", diag_shift_val, 
+    "_r", nhubs_val,
     ".pdf")
   pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
       METHOD != "IPC-HD: Thresholding",
-      METHOD != "JIC-HD: Thresholding"
+      METHOD != "JIC-HD: Thresholding",
+      nhubs == nhubs_val
       ) %>%
     mutate(
       METHOD = ifelse(METHOD == "IPC-HD: Screening", "IPC-HD", METHOD),
       METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
     mutate(
-      ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD   = factor(METHOD),

@@ -35,13 +35,13 @@ sim_par_table <- expand.grid(
   pneff           = c(0.01),
   pnh             = c(0.05),
   ph2min          = c(0.3, 0.5),
-  ph1min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 1, 5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
   diagonal_shift  = c(2),
-  n_prop          = c(0.5, 0.75, 1),
+  n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
-  p               = c(200, 400))
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
@@ -96,7 +96,7 @@ run_info <- list(
 
 ###########################
 ## LOOP OVER ALL 288 SIMULATION PARAMETER COMBINATIONS
-for (id_task in 1:72) {
+for (id_task in 1:216) {
   print(paste("XXXXXXXXXXXXXXXX ID-TASK", id_task))
 
   output <- NULL

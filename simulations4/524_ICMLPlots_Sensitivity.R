@@ -37,20 +37,20 @@ sim_par_table <- expand.grid(
   pneff           = c(0.01),
   pnh             = c(0.05),
   ph2min          = c(0.3, 0.5),
-  ph1min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 1, 5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
   diagonal_shift  = c(2),
-  n_prop          = c(0.5, 0.75, 1),
+  n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
-  p               = c(200, 400))
+  p               = c(100, 200, 400))
 attach(sim_par_table)
 
 
 ###################### Creating folders:
 subfolder_new        <- paste0("500_AggregatedDataExperiments/")
 subfolder_data_new   <- paste0(subfolder_new, "data_all/")
-subfolder_plots_new  <- paste0(subfolder_new, "plots_all/")
+subfolder_plots_new  <- paste0(subfolder_new, "sensitivity_all/")
 
 if (!dir.exists(subfolder_new)) {
        dir.create(subfolder_new)
@@ -70,20 +70,16 @@ if (!dir.exists(subfolder_plots_new)) {
 method_names <- c(
     "ST.ORAC.CORR.IM", 
     "ST.1OVER.CORR.IM", "ST.2OVER.CORR.IM", "ST.3OVER.CORR.IM")
-    #"ST.ORAC.THR.IM", 
-    #"ST.1OVER.THR.IM", "ST.2OVER.THR.IM", "ST.3OVER.THR.IM")
 method_names_clean <- c(
-    "Sample: Oracle",
-    "Sample: Overest 1", "Sample: Overest 2", "Sample: Overest 3")
-    #"Threshold: Oracle",
-    #"Threshold: Overest 1", "Threshold: Overest 2", "Threshold: Overest 3")
+    "JIC-HD: Oracle",
+    "JIC-HD: Overest 1", "JIC-HD: Overest 2", "JIC-HD: Overest 3")
 
 
 outputs_merged_list <- list()
 sd_const <- 2
 
 for (diag_shift_val in c(2)) {
-  for (p_val in c(200,400)) {
+  for (p_val in c(100, 200, 400)) {
   
     ##############################
     ##############################
@@ -205,10 +201,16 @@ output_summarised <- output_merged %>%
   summarise(mean = mean(eval), sd = sd(eval))
     
 T0_prop_val <- 1
+labs <- parse(text = c(
+  "'JIC-HD:'~~hat(s)==s",
+  "'JIC-HD:'~~hat(s)==frac(p,2)",
+  "'JIC-HD:'~~hat(s)==p",
+  "'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)"))
+
 
 for (diag_shift_val in c(2)) {
-for (ph1_val in c(0.3, 0.5)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+for (ph2_val in c(0.3, 0.5)) {
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
@@ -216,23 +218,28 @@ for (ph1_val in c(0.3, 0.5)) {
     subfolder_plots_new, 
     "524_Sens_TPR",
     "_d", diag_shift_val,
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
-      ph1 == ph1_val,
+      ph2 == ph2_val,
       p %in% c(200, 400)
       ) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-      METHOD     = factor(METHOD),
       TPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -245,7 +252,11 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -257,23 +268,29 @@ for (ph1_val in c(0.3, 0.5)) {
     subfolder_plots_new, 
     "524_Sens_FPR",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
-      ph1 == ph1_val,
+      ph2 == ph2_val,
       p %in% c(200, 400)
       ) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name     = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       FPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -286,7 +303,11 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -299,23 +320,29 @@ for (ph1_val in c(0.3, 0.5)) {
     subfolder_plots_new, 
     "524_Sens_prec",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
-      ph1 == ph1_val,
+      ph2 == ph2_val,
       p %in% c(200, 400)
       ) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Precision = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -328,7 +355,11 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -340,23 +371,29 @@ for (ph1_val in c(0.3, 0.5)) {
     subfolder_plots_new, 
     "524_Sens_rcll",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
-      ph1 == ph1_val,
+      ph2 == ph2_val,
       p %in% c(200, 400)
       ) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Recall = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -369,7 +406,11 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
   print(p1)
@@ -381,23 +422,29 @@ for (ph1_val in c(0.3, 0.5)) {
     subfolder_plots_new, 
     "524_Sens_fscr",
     "_d", diag_shift_val, 
-    "_ph", ph1_val,
+    "_p2h", ph2_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
-      ph1 == ph1_val,
+      ph2 == ph2_val,
       p %in% c(200, 400)
       ) %>%
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Fscore = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -410,8 +457,12 @@ for (ph1_val in c(0.3, 0.5)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       ylab("F-score") + 
-      facet_grid(ph2_name ~ p_name + nhubs_name, scales = "free_x", labeller = label_parsed) +
+      facet_grid(nhubs_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 
@@ -447,8 +498,8 @@ head(output_summarised)
 T0_prop_val <- 1
 
 for (diag_shift_val in c(2)) {
-for (p_val in c(200, 400)) {
-  gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
+for (p_val in c(100, 200, 400)) {
+  gv <- guide_legend(nrow = 1, byrow = TRUE, title = "")
 
 
   ## Plot 1: ph = 0.4
@@ -458,7 +509,7 @@ for (p_val in c(200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "tp") %>%
     filter(
@@ -467,11 +518,17 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       TPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -483,6 +540,10 @@ for (p_val in c(200, 400)) {
       geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd, fill = METHOD), alpha = 0.3) +
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -497,7 +558,7 @@ for (p_val in c(200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fp") %>%
     filter(
@@ -506,11 +567,17 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       FPR = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -523,6 +590,10 @@ for (p_val in c(200, 400)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -538,7 +609,7 @@ for (p_val in c(200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "prec") %>%
     filter(
@@ -547,11 +618,17 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Precision = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -564,6 +641,10 @@ for (p_val in c(200, 400)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -578,7 +659,7 @@ for (p_val in c(200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "rcll") %>%
     filter(
@@ -587,11 +668,17 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Recall = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -604,6 +691,10 @@ for (p_val in c(200, 400)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
       guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
@@ -618,7 +709,7 @@ for (p_val in c(200, 400)) {
     "_d", diag_shift_val, 
     "_p", p_val,
     ".pdf")
-  pdf(file_name, width = 5, height = 4)
+  pdf(file_name, width = 8, height = 5)
   ## Plot 1: TPR 
   p1 <-  output_summarised %>% filter(eval_par == "fscr") %>%
     filter(
@@ -627,11 +718,17 @@ for (p_val in c(200, 400)) {
     mutate(
       nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
       nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
-      ph1_name   = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1 == 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+      ph1_name   = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
       ph2_name   = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
       p_name     = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
       METHOD     = factor(METHOD),
       Fscore = mean) %>%
+    mutate(
+      METHOD = factor(
+        METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
+        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
+                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+      ) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -644,6 +741,10 @@ for (p_val in c(200, 400)) {
       geom_hline(yintercept = c(0,1), linetype = 2) +
       #geom_hline(yintercept = c(0), linetype = 2) +
       #facet_grid(rows = vars(ph2), cols = vars())
+      scale_color_discrete(labels = labs) +
+      scale_shape_discrete(labels = labs) +
+      scale_linetype_discrete(labels = labs) +
+      scale_fill_discrete(labels = labs) +
       ylab("F-score") + 
       facet_grid(ph2_name ~ nhubs_name + ph1_name, scales = "free_x", labeller = label_parsed) +
       theme(legend.position="bottom") + 
