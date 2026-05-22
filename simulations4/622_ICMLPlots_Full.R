@@ -19,7 +19,8 @@ T0_prop_val    <- as.numeric(input[2])
 
 
 ###################### Parameter table:
-runtype       <- 2 # FOR EXPERIMENTS
+#runtype       <- 2 # FOR EXPERIMENTS
+runtype       <- 3 # FOR FULL
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,
@@ -85,6 +86,7 @@ method_names_clean <- c(
 
 outputs_merged_list <- list()
 sd_const <- 2
+count <- 0
 
 for (diag_shift_val in c(2)) {
   for (p_val in c(100, 200, 400)) {
@@ -271,6 +273,8 @@ for (diag_shift_val in c(2)) {
     rm(
       output_merged_gl, output_merged_jic, output_merged_p,
       sim_ind_load, mat_gl, mat_jic, hubsdata_gl)
+      print(count)
+      count <- count + 1
   }
 }
 

@@ -16,8 +16,8 @@ library(lazyeval)
 
 
 ###################### Parameter table:
-runtype       <- 2 # FOR EXPERIMENT RUNS
-#runtype       <- 3 # FOR FULL RUNS
+#runtype       <- 2 # FOR EXPERIMENT RUNS
+runtype       <- 3 # FOR FULL RUNS
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,

@@ -18,7 +18,8 @@ diag_shift_val <- as.numeric(input[1])
 T0_prop_val    <- as.numeric(input[2])
 
 ###################### Parameter table:
-runtype       <- 3 # FOR EXPERIMENTS
+#runtype       <- 2 # FOR EXPERIMENT RUNS
+runtype       <- 3 # FOR FULL RUNS
 index_old     <- 1 # run index to use
 sim_par_table <- expand.grid(
   K              = 3,
@@ -31,15 +32,15 @@ sim_par_table <- expand.grid(
   running_days  = ifelse(runtype <= 2, 1, 5),
   threshold     = 2,
     
-  r2              = c(3),
-  r1              = c(5),
+  r2              = c(5),
+  r1              = c(5, 10, 15),
   pneff           = c(0.01),
   pnh             = c(0.05),
-  ph2             = c(0.3, 0.5),
-  ph1             = c(0.3, 0.4, 0.5),
+  ph2min          = c(0.3, 0.5),
+  ph1min          = c(0.3, 0.4, 0.5),
     
-  nsim            = ifelse(runtype <= 2, 2, 5),
-  diagonal_shift  = c(2,5),
+  nsim            = ifelse(runtype <= 2, 2, 10),
+  diagonal_shift  = c(2),
   n_prop          = c(0.5, 0.75, 1, 1.25),
   T0_prop         = c(1),
   p               = c(100, 200, 400))
@@ -72,25 +73,27 @@ method_names <- c(
     "HWGL.CORR.d",        ## HWGL-methdos.
     "COR_Scr_IPCHD", 
     "COR_Thr_IPCHD",
-    "ST.OVER.CORR.IM",
-    "ST.OVER.THR.IM")
+    "ST.2OVER.CORR.IM",
+    "ST.2OVER.THR.IM")
 method_names_clean <- c(
     "GLASSO",          ## GLASSO-methods
     "HWGL",        ## HWGL-methdos.
     "IPC-HD: Screening",
-    "IPC-HD: Threshold",
+    "IPC-HD: Thresholding",
     "JIC-HD: Sample Cov",
-    "JIC-HD: Threshold")
+    "JIC-HD: Thresholding")
 
 
 output_merged <- NULL
+diag_shift_val <- 2
+r1_val <- 5
 
 for(diag_shift_val in c(2)) {
 for (p_val in c(100, 200, 400)) {
   ##############################
   ##############################
   ## LOADING ALL DATA WITH T0 = P.
-  sim_ind_load    <- which(T0_prop == 1 & p == p_val & diagonal_shift == diag_shift_val)
+  sim_ind_load    <- which(T0_prop == 1 & p == p_val & diagonal_shift == diag_shift_val, r1 == r1_val)
   type            <- "all"
   results_dir     <- paste0(subfolder_new, "plots_", type, "/")
 
@@ -99,14 +102,18 @@ for (p_val in c(100, 200, 400)) {
       subfolder_new, "data_all/",
       "output", sim_ind, ".RData"))
   }
+  
+  
   ##############################
   ##############################
   ## Total time for individual methods
   output_merged_gl  <- distinct(bind_rows(mget(ls(pattern = '^output\\d+')))) %>%
-    filter(METHOD %in% method_names[1:4], K_MAT_NUM != 0) %>%
+    filter(METHOD %in% method_names[1:4], K_MAT_NUM != 0) 
+      
+  output_merged_gl  <- output_merged_gl %>%
+    select(-starts_with("var")) %>%
     mutate(METHOD = str_replace_all(METHOD, setNames(method_names_clean, method_names))) %>%
-    arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) %>%
-    select(-starts_with("var"))
+    arrange(TASK_ID, SIM_NUM, K_MAT_NUM, METHOD) 
   output_merged_gl$microrun <- rep(1:10, nrow(output_merged_gl) / 10) 
   
   output_merged_gl <- output_merged_gl %>%
@@ -146,21 +153,29 @@ file_name <- paste0(
   "631_logtime",
   "_d", diag_shift_val, 
   ".pdf")
-pdf(file_name, width = 5, height = 4)
-p1 <- output_merged %>%
+pdf(file_name, width = 8, height = 5)
+
+
+data_plot <- output_merged %>%
   filter(
     METHOD != "IPC-HD: Screening",
-    METHOD != "JIC-HD: Threshold",
-    ph1 == 0.4) %>%
+    METHOD != "JIC-HD: Thresholding"
+  ) %>%
   mutate(
     METHOD = ifelse(METHOD == "IPC-HD: Threshold", "IPC-HD", METHOD),
     METHOD = ifelse(METHOD == "JIC-HD: Sample Cov", "JIC-HD", METHOD)) %>%
 
   mutate(
-    ph1_name = ifelse(ph1 == 0.3, "p[C] == 0.3", ifelse(ph1== 0.4, "p[C] == 0.4", "p[C] == 0.5")),
+    ph1_name = ifelse(ph1 == 0.3, "p[C] %in% \"[0.3, 0.6]\"", ifelse(ph1 == 0.4, "p[C] %in% \"[0.4, 0.7]\"", "p[C] %in% \"[0.5, 0.8]\"")),
     ph2_name = ifelse(ph2 == 0.3, "p[I] == 0.3", ifelse(ph2 == 0.4, "p[I] == 0.4", "p[I] == 0.5")),
     p_name   = ifelse(p == 100, "p == 100", ifelse(p == 200, "p == 200", "p == 400")),
-    METHOD = factor(METHOD)) %>%
+    METHOD = factor(METHOD))
+
+print(unique(data_plot$METHOD))
+print(colnames(data_plot))
+print(unique(data_plot$n))
+
+p1 <- data_plot %>%
 
   ggplot(aes(x = n, y = log(MeanTime, base = 60))) + 
     #geom_ribbon(aes(ymin = MeanTime - SdTime, ymax = MeanTime + SdTime, fill = METHOD), alpha = 0.3) +
@@ -181,7 +196,7 @@ p1 <- output_merged %>%
     scale_fill_manual(values=c(cbPalette[c(2,4,8)], "#000000")) +
       
     theme(legend.title = element_blank()) +
-    facet_grid(ph2_name ~ p_name + ph1_name, scales = "free_x", labeller = label_parsed) +
+    facet_grid(ph1_name ~ p_name + ph2_name, scales = "free_x", labeller = label_parsed) +
     theme(legend.position="bottom") + 
     guides(colour = gv, shape = gv, size = gv, linetype = gv, fill = gv)
 print(p1)
@@ -192,3 +207,5 @@ output_merged_gl <- NULL
 output_merged_jic <- NULL
 
 }
+
+rm(list = ls())

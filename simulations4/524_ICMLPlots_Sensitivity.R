@@ -203,8 +203,8 @@ output_summarised <- output_merged %>%
 T0_prop_val <- 1
 labs <- parse(text = c(
   "'JIC-HD:'~~hat(s)==s",
-  "'JIC-HD:'~~hat(s)==frac(p,2)",
-  "'JIC-HD:'~~hat(s)==p",
+  "'JIC-HD:'~~hat(s)==frac(sqrt(p),2)",
+  "'JIC-HD:'~~hat(s)==sqrt(p)",
   "'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)"))
 
 
@@ -237,9 +237,7 @@ for (ph2_val in c(0.3, 0.5)) {
     mutate(
       METHOD = factor(
         METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
-        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
-                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
-      ) %>%
+        labels = labs)) %>%
     ggplot(aes(x = n, y = TPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
       #scale_linetype_manual(values = c(2, 3, 4, 1)) +
@@ -288,8 +286,7 @@ for (ph2_val in c(0.3, 0.5)) {
     mutate(
       METHOD = factor(
         METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
-        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
-                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+        labels = labs)
       ) %>%
     ggplot(aes(x = n, y = FPR)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
@@ -340,8 +337,7 @@ for (ph2_val in c(0.3, 0.5)) {
     mutate(
       METHOD = factor(
         METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
-        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
-                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+        labels = labs)
       ) %>%
     ggplot(aes(x = n, y = Precision)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
@@ -391,8 +387,7 @@ for (ph2_val in c(0.3, 0.5)) {
     mutate(
       METHOD = factor(
         METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
-        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
-                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+        labels = labs)
       ) %>%
     ggplot(aes(x = n, y = Recall)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 
@@ -442,8 +437,7 @@ for (ph2_val in c(0.3, 0.5)) {
     mutate(
       METHOD = factor(
         METHOD, levels = c("ST.ORAC.CORR.IM","ST.1OVER.CORR.IM","ST.2OVER.CORR.IM","ST.3OVER.CORR.IM"),
-        labels = parse(text = c("'JIC-HD:'~~hat(s)==s","'JIC-HD:'~~hat(s)==frac(p,2)",
-                                "'JIC-HD:'~~hat(s)==p","'JIC-HD:'~~hat(s)==frac(3*sqrt(p),2)")))
+        labels = labs)
       ) %>%
     ggplot(aes(x = n, y = Fscore)) + 
       geom_line(aes(col = METHOD, linetype = METHOD), linewidth = 1) + 

@@ -210,14 +210,14 @@ gv <- guide_legend(nrow = 2, byrow = TRUE, title = "")
 file_name <- paste0(
   subfolder_plots_new, 
   "525_Sens.pdf")
-pdf(file_name, width = 5, height = 6)
+pdf(file_name, width = 5, height = 4.5)
 ## Plot 1: TPR 
 p1 <-  output_summarised %>%
   filter(
     ph1 == 0.3,
     ph2 == 0.3, 
     p  == 400,
-    eval_par %in% c("tp", "fp", "fscr")) %>%
+    eval_par %in% c("tp", "fp")) %>%
   mutate(
     nhubs_name = ifelse(nhubs == 5, "H[c] == 5", ifelse(nhubs == 10, "H[c] == 10", "H[c] == 15")),
     nhubs_name = factor(nhubs_name, levels = c("H[c] == 5", "H[c] == 10", "H[c] == 15"), ordered = TRUE),
